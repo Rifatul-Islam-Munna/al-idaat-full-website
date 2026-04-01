@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json* tsconfig.json ./
 RUN npm ci --ignore-scripts
 
+COPY index.ts ./      
 COPY src ./src
 RUN npm run build
 
