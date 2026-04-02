@@ -4,8 +4,8 @@ import { env } from "../config/env";
 
 const DEFAULT_ADMIN = {
   name: "Super Admin",
-  email: "admin@gmail.com",
-  password: "1234567890",
+  email: "adminalidaad@gmail.com",
+  password: "ADMIN@#&alidaad",
   role: "admin",
   verified: true,
 };
