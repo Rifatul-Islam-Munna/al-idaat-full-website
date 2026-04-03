@@ -17,6 +17,7 @@ export const createProductSchema = z.object({
     body: z
         .object({
             name: z.string().min(1, { message: "Product name is required" }),
+            shortDescription: z.string().min(1, { message: "Short description is required" }),
             description: z.string().min(1, { message: "Description is required" }),
             brand: z.string().optional(),
 
@@ -85,6 +86,7 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z.object({
     body: z.object({
         name: z.string().min(1, { message: "Product name is required" }).optional(),
+        shortDescription: z.string().min(1, { message: "Short description is required" }).optional(),
         description: z.string().min(1, { message: "Description is required" }).optional(),
         brand: z.string().optional(),
 

@@ -36,14 +36,22 @@ const UploadedFileList: React.FC = () => {
     let imgFromBanner: string[] = [];
 
     if (banner?.success) {
-        imgFromBanner = banner.data.map((ele) => ele.url);
+        imgFromBanner = banner.data.flatMap((ele) => {
+            const desktop = ele.desktopUrl || ele.url;
+            const mobile = ele.mobileUrl;
+            return [desktop, mobile].filter(Boolean) as string[];
+        });
     }
 
     // urls from offer banners-----------------------
     let imgFromOfferBanner: string[] = [];
 
     if (offerBanner?.success) {
-        imgFromOfferBanner = offerBanner.data.map((ele) => ele.url);
+        imgFromOfferBanner = offerBanner.data.flatMap((ele) => {
+            const desktop = ele.desktopUrl || ele.url;
+            const mobile = ele.mobileUrl;
+            return [desktop, mobile].filter(Boolean) as string[];
+        });
     }
 
     // urls from category images-----------------------
@@ -53,7 +61,7 @@ const UploadedFileList: React.FC = () => {
         imgFromCategoryImages = categoryImages.data.map((ele) => ele.url);
     }
     // ===================================================all image urls=================================================
-    const allImageUrls = [...imgFromBlog, ...imgFromProducts, ...imgFromBanner, ...imgFromOfferBanner, ...imgFromCategoryImages];
+    const allImageUrls = [...new Set([...imgFromBlog, ...imgFromProducts, ...imgFromBanner, ...imgFromOfferBanner, ...imgFromCategoryImages])];
 
     const handleDeleteMultiple = async () => {
         if (!selectedIds.length) return;

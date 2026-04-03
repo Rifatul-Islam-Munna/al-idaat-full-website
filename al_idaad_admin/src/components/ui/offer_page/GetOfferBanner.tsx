@@ -82,11 +82,37 @@ const GetOfferBanner = () => {
             <div className="space-y-4">
                 {offerBanner?.data.map((ele) => {
                     const isDeleting = deletingId === ele._id;
+                    const desktopUrl = ele.desktopUrl || ele.url;
+                    const mobileUrl = ele.mobileUrl || desktopUrl;
+
+                    if (!desktopUrl) {
+                        return null;
+                    }
 
                     return (
-                        // ✅ Added `group` class so group-hover works on children
-                        <div key={ele._id} className="relative group">
-                            <Image src={ele.url} alt="Preview" width={800} height={320} className="w-full aspect-5/2" />
+                        <div key={ele._id} className="relative group rounded-xl border border-border bg-white p-4">
+                            <div className={`grid gap-4 md:grid-cols-2 transition-opacity duration-200 ${isDeleting ? "opacity-50" : "opacity-100"}`}>
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-text_normal/60">Desktop Offer Banner</p>
+                                    <Image
+                                        src={desktopUrl}
+                                        alt="desktop offer banner"
+                                        width={1600}
+                                        height={640}
+                                        className="w-full aspect-[5/2] rounded-lg object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-text_normal/60">Mobile Offer Banner</p>
+                                    <Image
+                                        src={mobileUrl!}
+                                        alt="mobile offer banner"
+                                        width={1200}
+                                        height={1500}
+                                        className="w-full aspect-[4/5] rounded-lg object-cover"
+                                    />
+                                </div>
+                            </div>
 
                             <button
                                 onClick={() => handleDelete(ele._id)}

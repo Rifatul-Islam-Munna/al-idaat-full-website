@@ -48,16 +48,25 @@ const GetBanner = () => {
         <div className="space-y-4">
             {banner?.data.map((item) => {
                 const isDeleting = deletingId === item._id;
+                const desktopUrl = item.desktopUrl || item.url;
+                const mobileUrl = item.mobileUrl || desktopUrl;
+
+                if (!desktopUrl) {
+                    return null;
+                }
 
                 return (
-                    <div key={item._id} className="group relative p-1 border border-border overflow-hidden">
-                        <Image
-                            src={item.url}
-                            alt="banner"
-                            width={1600}
-                            height={900}
-                            className={`w-full h-auto transition-opacity duration-200 ${isDeleting ? "opacity-50" : "opacity-100"}`}
-                        />
+                    <div key={item._id} className="group relative rounded-xl border border-border bg-white p-4 overflow-hidden">
+                        <div className={`grid gap-4 md:grid-cols-2 transition-opacity duration-200 ${isDeleting ? "opacity-50" : "opacity-100"}`}>
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text_normal/60">Desktop Banner</p>
+                                <Image src={desktopUrl} alt="desktop banner" width={1600} height={608} className="w-full aspect-[50/19] rounded-lg object-cover" />
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text_normal/60">Mobile Banner</p>
+                                <Image src={mobileUrl!} alt="mobile banner" width={1200} height={1500} className="w-full aspect-[4/5] rounded-lg object-cover" />
+                            </div>
+                        </div>
 
                         {/* Delete Button (show on hover) */}
                         <button

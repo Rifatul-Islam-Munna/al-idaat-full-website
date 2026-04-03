@@ -35,22 +35,38 @@ const OfferSlider = ({ offerBanner }: { offerBanner: OfferType[] }) => {
                 modules={[EffectFade, Autoplay]}
                 className="mySwiper"
             >
-                {offerBanner.map((ele) => (
-                    <SwiperSlide key={ele._id}>
-                        {/* Image */}
-                        <div className="flex justify-center relative w-full aspect-5/3 lg:aspect-5/2">
-                            <Link href={`/all-products/details/${ele.productId}`}>
-                                <Image
-                                    src={ele.url}
-                                    alt="al idaad offer product"
-                                    width={1920}
-                                    height={1068}
-                                    className="absolute left-0 right-0 w-full aspect-5/3 lg:aspect-5/2 rounded"
-                                />
-                            </Link>
-                        </div>
-                    </SwiperSlide>
-                ))}
+                {offerBanner.map((ele) => {
+                    const desktopUrl = ele.desktopUrl || ele.url;
+                    const mobileUrl = ele.mobileUrl || desktopUrl;
+
+                    if (!desktopUrl) {
+                        return null;
+                    }
+
+                    return (
+                        <SwiperSlide key={ele._id}>
+                            {/* Image */}
+                            <div className="flex justify-center relative w-full aspect-[4/5] md:aspect-[5/2]">
+                                <Link href={`/all-products/details/${ele.productId}`} className="relative block h-full w-full">
+                                    <Image
+                                        src={mobileUrl!}
+                                        alt="al idaad mobile offer product"
+                                        fill
+                                        sizes="100vw"
+                                        className="rounded object-cover md:hidden"
+                                    />
+                                    <Image
+                                        src={desktopUrl}
+                                        alt="al idaad offer product"
+                                        fill
+                                        sizes="100vw"
+                                        className="hidden rounded object-cover md:block"
+                                    />
+                                </Link>
+                            </div>
+                        </SwiperSlide>
+                    );
+                })}
             </Swiper>
         </>
     );

@@ -57,6 +57,7 @@ const emptyAttarSize = (): AttarSize => ({
 const AddProduct = () => {
     // Core fields
     const [name, setName] = useState<string>("");
+    const [shortDescription, setShortDescription] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [brand, setBrand] = useState<string>("");
     const [category, setCategory] = useState<{ _id: string; name: string } | null>(null);
@@ -199,7 +200,7 @@ const AddProduct = () => {
     const handleAddProduct = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name || !description || !category || price < 0) {
+        if (!name || !shortDescription || !description || !category || price < 0) {
             Swal.fire({
                 icon: "warning",
                 title: "Invalid Input",
@@ -257,6 +258,7 @@ const AddProduct = () => {
 
         const productData = {
             name,
+            shortDescription,
             description,
             brand,
             category: findMainParentById(productCategories, category._id),
@@ -324,6 +326,7 @@ const AddProduct = () => {
                 });
                 // Reset all state
                 setName("");
+                setShortDescription("");
                 setDescription("");
                 setBrand("");
                 setCategory(null);
@@ -464,6 +467,16 @@ const AddProduct = () => {
                             placeholder="Enter product name"
                             className="w-full px-3 py-2 rounded border border-border bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
                         />
+                    </div>
+
+                    {/* ── Short Description ── */}
+                    <div>
+                        <label htmlFor="shortDescription" className="block mb-2 text-sm font-medium text-text_normal">
+                            Short Description
+                        </label>
+                        <div className="border border-border rounded-lg overflow-hidden">
+                            <RichTextEditor content={shortDescription} onChange={(content) => setShortDescription(content)} />
+                        </div>
                     </div>
 
                     {/* ── Description ── */}

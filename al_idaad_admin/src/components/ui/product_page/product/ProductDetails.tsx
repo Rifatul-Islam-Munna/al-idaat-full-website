@@ -79,7 +79,7 @@ const ProductDetails = ({ id }: { id: string }) => {
         );
     }
 
-    const { name, description, thumbnail, category, price, discountPercentage, inStock, ratings, reviews, images, variants, attarSizes } =
+    const { name, shortDescription, description, thumbnail, category, price, discountPercentage, inStock, ratings, reviews, images, variants, attarSizes } =
         productDetails;
 
     // const finalPrice = Math.round(price - (price * (discountPercentage ?? 0)) / 100);
@@ -213,6 +213,13 @@ const ProductDetails = ({ id }: { id: string }) => {
                         )}
                     </div>
                 </div>
+
+                {shortDescription && (
+                    <div className="mt-6 rounded-lg border border-border bg-bg_secondary p-4">
+                        <p className="mb-3 text-sm font-semibold text-primary">Short Description</p>
+                        <div className="text-text_normal" dangerouslySetInnerHTML={{ __html: shortDescription }} />
+                    </div>
+                )}
 
                 {/* ── Tabs ── */}
                 <div className="mt-6">

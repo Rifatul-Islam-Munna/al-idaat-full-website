@@ -566,6 +566,15 @@
     "/uploads/single": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Created"
@@ -864,6 +873,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "banners": {
+                    "example": "any"
+                  },
                   "urls": {
                     "example": "any"
                   }
@@ -1168,6 +1180,26 @@
         "responses": {
           "201": {
             "description": "Created"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "desktopUrl": {
+                    "example": "any"
+                  },
+                  "url": {
+                    "example": "any"
+                  },
+                  "mobileUrl": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       }

@@ -91,11 +91,13 @@ export const getCategory = async (id: string): Promise<CategoryType> => {
 // get banners
 export const getBanners = async (): Promise<BannerType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/banners`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
         cache: "force-cache",
     });
 
     const result: GetAllBannersResponseType = await res.json();
+
+    console.log("banner-data", result);
 
     return result.data;
 };

@@ -1,22 +1,32 @@
 import { getCategories, getCategoryImage } from "@/utils/fetchData";
-// import AllCategoriesClient from "./AllCategoriesClient";
-// import AllCategorySlider from "./AllCategorySlider";
 import AllCategoryImageSlider from "./AllCategoryImageSlider";
 
 const AllCategories = async () => {
-    const categoryData = await getCategories();
-    const categoryImageData = await getCategoryImage();
-    return (
-        <div>
-            <p className="font-poppins text-2xl sm:text-3xl leading-0 text-center">Browse Catagories</p>
-            <p className="text-text_normal text-center my-6">
-                Discover our diverse collection of categories and find the product that suits you best
-            </p>
-            {/* <AllCategoriesClient categories={categoryData}></AllCategoriesClient> */}
-            {/* <AllCategorySlider categories={categoryData}></AllCategorySlider> */}
-            <AllCategoryImageSlider categories={categoryData} categoryImages={categoryImageData}></AllCategoryImageSlider>
-        </div>
-    );
+  const categoryData = await getCategories();
+  const categoryImageData = await getCategoryImage();
+
+  return (
+    <section className="py-10">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-3">
+          Our Collection
+        </span>
+        <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 leading-tight">
+          Browse Categories
+        </h2>
+        <p className="text-gray-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
+          Discover our diverse collection and find the product that suits you
+          best
+        </p>
+      </div>
+
+      <AllCategoryImageSlider
+        categories={categoryData}
+        categoryImages={categoryImageData}
+      />
+    </section>
+  );
 };
 
 export default AllCategories;

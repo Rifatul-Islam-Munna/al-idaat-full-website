@@ -6,7 +6,7 @@ import { identifier } from "../middlewares/indentifier.middleware";
 const router = Router();
 
 router.get("/", getAllFiles);
-router.post("/single", upload.single("file"), uploadSingleFile);
+router.post("/single", identifier, upload.single("file"), uploadSingleFile);
 router.post("/multiple", identifier, upload.array("files"), uploadMultipleFiles);
 router.delete("/single/:id", identifier, deleteSingleFile);
 router.delete("/multiple", identifier, deleteMultipleFiles);

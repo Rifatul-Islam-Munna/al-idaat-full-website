@@ -79,7 +79,9 @@ export interface GetSingleCategoryResponseType {
 
 export interface BannerType {
     _id: string;
-    url: string;
+    url?: string;
+    desktopUrl?: string;
+    mobileUrl?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -107,6 +109,7 @@ export interface AttarSize {
 export interface ProductType {
     _id: string;
     name: string;
+    shortDescription?: string;
     description: string;
     brand?: string;
     category: {
@@ -166,7 +169,9 @@ export interface GetSingleProductResponseType {
 // offer banner------------------------------------
 export type OfferType = {
     _id: string;
-    url: string;
+    url?: string;
+    desktopUrl?: string;
+    mobileUrl?: string;
     productId: string;
     createdAt: string;
     updatedAt: string;

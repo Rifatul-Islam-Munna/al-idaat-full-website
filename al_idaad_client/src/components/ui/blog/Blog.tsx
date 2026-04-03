@@ -1,57 +1,61 @@
 import Link from "next/link";
-
 import { getBlogs } from "@/utils/fetchData";
 import BlogSlider from "./BlogSlider";
 import BlogCardHome from "./BlogCardHome";
+import { FiArrowRight } from "react-icons/fi";
 
 const Blog = async () => {
-    const blogData = await getBlogs();
+  const blogData = await getBlogs();
 
-    return (
-        <div>
-            <p className="text-2xl sm:text-3xl font-poppins text-center mb-8">Our Latest News</p>
-            <div className="hidden xl:flex justify-between">
-                {blogData.slice(0, 4).map((ele) => (
-                    <div key={ele._id}>
-                        <BlogCardHome data={ele}></BlogCardHome>
-                    </div>
-                ))}
-            </div>
+  return (
+    <section className="py-10">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-3">
+          Blog & News
+        </span>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+          Our Latest News
+        </h2>
+        <p className="text-gray-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
+          Stay up to date with our latest updates, tips, and stories
+        </p>
+      </div>
 
-            <div className="hidden lg:flex xl:hidden justify-center gap-4">
-                {blogData.slice(0, 3).map((ele) => (
-                    <div key={ele._id}>
-                        <BlogCardHome data={ele}></BlogCardHome>
-                    </div>
-                ))}
-            </div>
+      {/* Desktop — 4 cards */}
+      <div className="hidden xl:grid xl:grid-cols-4 gap-4">
+        {blogData.slice(0, 4).map((ele) => (
+          <BlogCardHome key={ele._id} data={ele} />
+        ))}
+      </div>
 
-            <div className="lg:hidden">
-                <BlogSlider data={blogData}></BlogSlider>
-            </div>
+      {/* Tablet — 3 cards */}
+      <div className="hidden lg:grid lg:grid-cols-3 xl:hidden gap-4">
+        {blogData.slice(0, 3).map((ele) => (
+          <BlogCardHome key={ele._id} data={ele} />
+        ))}
+      </div>
 
-            <div className="flex w-full justify-end lg:justify-center xl:justify-end mt-4">
-                <Link href="/blog" className="text-text_normal flex items-end gap-1 w-fit">
-                    <span className="hover:underline transition duration-150">Explore more</span>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-arrow-right-icon lucide-arrow-right"
-                    >
-                        <path d="M5 12h14" />
-                        <path d="m12 5 7 7-7 7" />
-                    </svg>
-                </Link>
-            </div>
-        </div>
-    );
+      {/* Mobile — slider */}
+      <div className="lg:hidden">
+        <BlogSlider data={blogData} />
+      </div>
+
+      {/* CTA */}
+      <div className="flex justify-center mt-8">
+        <Link
+          href="/blog"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl
+                               border border-brand text-brand font-semibold text-sm
+                               hover:bg-brand hover:text-white
+                               transition-all duration-200"
+        >
+          Explore All Posts
+          <FiArrowRight size={15} />
+        </Link>
+      </div>
+    </section>
+  );
 };
 
 export default Blog;

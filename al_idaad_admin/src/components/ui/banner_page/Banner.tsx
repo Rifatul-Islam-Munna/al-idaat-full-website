@@ -1,141 +1,49 @@
 "use client";
+
+import SingleImageUploader from "@/components/shared/SingleImageUploader";
 import { useAuth } from "@/components/shared/AuthContext";
 import { api } from "@/libs/axios";
-import { useState, useRef } from "react";
-import { MdUpload, MdClose, MdImage, MdCheckCircle, MdInfo } from "react-icons/md";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import Image from "next/image";
+import { useState } from "react";
+import axios from "axios";
 import Swal from "sweetalert2";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { MdCheckCircle, MdImage, MdInfo } from "react-icons/md";
 
-interface UploadedImage {
+type UploadedImage = {
     url: string;
     id: string;
-}
+};
 
-interface UploadResponse {
-    success: boolean;
-    data: Array<{
-        _id: string;
-        url: string;
-        originalName: string;
-        publicId: string;
-    }>;
-}
+const getErrorMessage = (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message;
+        const details = error.response?.data?.errors;
+
+        if (Array.isArray(details) && details.length > 0) {
+            return details.map((item: { message?: string }) => item.message).filter(Boolean).join(", ");
+        }
+
+        return message || error.message;
+    }
+
+    return "Failed to save banner. Please try again.";
+};
 
 const Banner = () => {
-    const { changeUploedFilesKey, changeBannerKey } = useAuth();
-    const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-    const [previewImages, setPreviewImages] = useState<string[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
+    const { changeBannerKey } = useAuth();
+    const [desktopImage, setDesktopImage] = useState<UploadedImage | null>(null);
+    const [mobileImage, setMobileImage] = useState<UploadedImage | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [uploadSuccess, setUploadSuccess] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
-
-        // Create preview URLs
-        const previews: string[] = [];
-        Array.from(files).forEach((file) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                previews.push(reader.result as string);
-                if (previews.length === files.length) {
-                    setPreviewImages(previews);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    };
-
-    const handleUpload = async () => {
-        const files = fileInputRef.current?.files;
-        if (!files || files.length === 0) {
-            Swal.fire({
-                icon: "warning",
-                title: "No Files Selected",
-                text: "Please select files first",
-                confirmButtonColor: "#3b82f6",
-            });
-            return;
-        }
-
-        setIsUploading(true);
-        setUploadSuccess(false);
-
-        try {
-            const formData = new FormData();
-            Array.from(files).forEach((file) => {
-                formData.append("files", file);
-            });
-
-            const response = await api.post<UploadResponse>("/uploads/multiple", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            if (response.data.success) {
-                const uploaded: UploadedImage[] = response.data.data.map((item) => ({
-                    url: item.url,
-                    id: item._id,
-                }));
-
-                setUploadedImages(uploaded);
-                setUploadSuccess(true);
-                changeUploedFilesKey();
-
-                // Reset file input
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                }
-
-                Swal.fire({
-                    icon: "success",
-                    title: "Upload Successful!",
-                    text: `${uploaded.length} image${uploaded.length > 1 ? "s" : ""} uploaded successfully`,
-                    confirmButtonColor: "#10b981",
-                    timer: 1000,
-                    showConfirmButton: false,
-                });
-            }
-        } catch (error) {
-            console.error("Error uploading images:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Upload Failed",
-                text: "Failed to upload images. Please try again.",
-                confirmButtonColor: "#ef4444",
-            });
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleRemovePreview = (index: number) => {
-        const newPreviews = previewImages.filter((_, i) => i !== index);
-        setPreviewImages(newPreviews);
-
-        // Also reset file input if no previews left
-        if (newPreviews.length === 0 && fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    };
-
-    const handleRemoveUploaded = (index: number) => {
-        const newUploaded = uploadedImages.filter((_, i) => i !== index);
-        setUploadedImages(newUploaded);
-    };
 
     const handleSaveBanner = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
 
-        if (uploadedImages.length === 0) {
+        if (!desktopImage || !mobileImage) {
             Swal.fire({
                 icon: "warning",
-                title: "No Images",
-                text: "Please upload images first",
+                title: "Images Missing",
+                text: "Please upload both desktop and mobile banner images.",
                 confirmButtonColor: "#3b82f6",
             });
             return;
@@ -144,26 +52,23 @@ const Banner = () => {
         setIsSaving(true);
 
         try {
-            // Extract URLs from uploaded images and send as array
-            const urls = uploadedImages.map((img) => img.url);
-
-            console.log("Saving banner with URLs:", urls);
-            const result = await api.post(`/banners`, { urls });
+            const result = await api.post("/banners", {
+                desktopUrl: desktopImage.url,
+                mobileUrl: mobileImage.url,
+            });
 
             if (result.data.success) {
                 await Swal.fire({
                     icon: "success",
                     title: "Banner Saved!",
-                    text: `${result.data.count || urls.length} banner${(result.data.count || urls.length) > 1 ? "s" : ""} created successfully`,
+                    text: "Responsive banner created successfully.",
                     confirmButtonColor: "#10b981",
-                    timer: 2000,
+                    timer: 1800,
                     showConfirmButton: false,
                 });
 
-                setUploadedImages([]);
-                setPreviewImages([]);
-                setUploadSuccess(false);
-                changeUploedFilesKey();
+                setDesktopImage(null);
+                setMobileImage(null);
                 changeBannerKey();
             }
         } catch (error) {
@@ -171,7 +76,7 @@ const Banner = () => {
             Swal.fire({
                 icon: "error",
                 title: "Save Failed",
-                text: "Failed to save banner. Please try again.",
+                text: getErrorMessage(error),
                 confirmButtonColor: "#ef4444",
             });
         } finally {
@@ -179,165 +84,108 @@ const Banner = () => {
         }
     };
 
-    const triggerFileInput = () => {
-        fileInputRef.current?.click();
-    };
-
     return (
-        <div className=" space-y-6">
-            {/* Header */}
+        <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Banner Upload</h2>
-                <p className="text-gray-600">Upload multiple images for your banner</p>
+                <p className="text-gray-600">Upload a desktop and a mobile image for each homepage banner slide.</p>
 
-                {/* Image Ratio Notice */}
-                <div className="mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <MdInfo className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-                    <div>
-                        <p className="text-sm font-medium text-blue-900">Image Ratio Recommendation</p>
-                        <p className="text-sm text-blue-700 mt-1">
-                            For best results, please use images with a <strong>50:19 aspect ratio</strong> (e.g., 1900×722)
-                        </p>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <MdInfo className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                        <div>
+                            <p className="text-sm font-medium text-blue-900">Desktop Banner</p>
+                            <p className="text-sm text-blue-700 mt-1">Aspect: 50:19</p>
+                            <p className="text-sm text-blue-700">Recommended size: 1900 x 722 px</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <MdInfo className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+                        <div>
+                            <p className="text-sm font-medium text-emerald-900">Mobile Banner</p>
+                            <p className="text-sm text-emerald-700 mt-1">Aspect: 4:5</p>
+                            <p className="text-sm text-emerald-700">Recommended size: 1200 x 1500 px</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Upload Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleFileSelect} className="hidden" />
-
-                {/* Upload Button Area */}
-                {previewImages.length === 0 && uploadedImages.length === 0 && (
-                    <div
-                        onClick={triggerFileInput}
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
-                    >
-                        <MdUpload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-lg font-medium text-gray-700 mb-2">Click to upload images</p>
-                        <p className="text-sm text-gray-500">PNG, JPG, WEBP up to 1MB</p>
-                        <p className="text-xs text-gray-400 mt-2">Recommended: 50:19 aspect ratio</p>
+            <div className="grid gap-6 xl:grid-cols-2">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+                    <div>
+                        <p className="text-lg font-semibold text-gray-800">Desktop Banner Image</p>
+                        <p className="text-sm text-gray-500">Used on tablets, laptops, and desktops.</p>
                     </div>
-                )}
 
-                {/* Preview Grid - Before Upload */}
-                {previewImages.length > 0 && uploadedImages.length === 0 && (
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-800">Selected Images ({previewImages.length})</h3>
-                            <button onClick={triggerFileInput} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                                Change Files
+                    {desktopImage ? (
+                        <div className="space-y-3">
+                            <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                <Image src={desktopImage.url} alt="Desktop banner preview" width={1900} height={722} className="w-full aspect-[50/19] object-cover" />
+                            </div>
+                            <button onClick={() => setDesktopImage(null)} className="text-sm font-medium text-red-500 hover:text-red-600">
+                                Remove desktop selection
                             </button>
                         </div>
-
-                        <div>
-                            {previewImages.map((preview, index) => (
-                                <div key={index} className="relative group p-1 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                                    <Image
-                                        width={600}
-                                        height={228}
-                                        src={preview}
-                                        alt={`Preview ${index + 1}`}
-                                        className="w-full aspect-50/19 object-cover"
-                                    />
-                                    <button
-                                        onClick={() => handleRemovePreview(index)}
-                                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                                    >
-                                        <MdClose className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button
-                            onClick={handleUpload}
-                            disabled={isUploading}
-                            className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
-                        >
-                            {isUploading ? (
-                                <>
-                                    <AiOutlineLoading3Quarters className="h-5 w-5 animate-spin" />
-                                    Uploading...
-                                </>
-                            ) : (
-                                <>
-                                    <MdUpload className="h-5 w-5" />
-                                    Upload {previewImages.length} Image{previewImages.length > 1 ? "s" : ""}
-                                </>
-                            )}
-                        </button>
-                    </div>
-                )}
-
-                {/* Uploaded Images Grid - After Upload */}
-                {uploadedImages.length > 0 && (
-                    <div className="space-y-4">
-                        {uploadSuccess && (
-                            <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <MdCheckCircle className="h-5 w-5 text-green-600" />
-                                <p className="text-green-700 font-medium">Images uploaded successfully!</p>
+                    ) : (
+                        <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 aspect-[50/19]">
+                            <div className="text-center text-gray-400">
+                                <MdImage className="mx-auto h-10 w-10 mb-2" />
+                                <p className="text-sm">No desktop image uploaded yet</p>
                             </div>
-                        )}
-
-                        <h3 className="text-lg font-semibold text-gray-800">Uploaded Images ({uploadedImages.length})</h3>
-
-                        <div>
-                            {uploadedImages.map((image, index) => (
-                                <div key={image.id} className="relative group rounded-lg overflow-hidden">
-                                    <Image
-                                        width={600}
-                                        height={228}
-                                        src={image.url}
-                                        alt={`Uploaded ${index + 1}`}
-                                        className="w-full aspect-50/19 object-cover"
-                                    />
-                                    <button
-                                        onClick={() => handleRemoveUploaded(index)}
-                                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                                    >
-                                        <MdClose className="h-4 w-4" />
-                                    </button>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                        <p className="text-white text-xs truncate">Banner</p>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
+                    )}
+
+                    <SingleImageUploader onImageUpload={(image) => setDesktopImage({ url: image.url, id: image._id })} />
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+                    <div>
+                        <p className="text-lg font-semibold text-gray-800">Mobile Banner Image</p>
+                        <p className="text-sm text-gray-500">Used on phones for a cleaner mobile hero.</p>
                     </div>
-                )}
+
+                    {mobileImage ? (
+                        <div className="space-y-3">
+                            <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                <Image src={mobileImage.url} alt="Mobile banner preview" width={1200} height={1500} className="w-full aspect-[4/5] object-cover" />
+                            </div>
+                            <button onClick={() => setMobileImage(null)} className="text-sm font-medium text-red-500 hover:text-red-600">
+                                Remove mobile selection
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 aspect-[4/5]">
+                            <div className="text-center text-gray-400">
+                                <MdImage className="mx-auto h-10 w-10 mb-2" />
+                                <p className="text-sm">No mobile image uploaded yet</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <SingleImageUploader onImageUpload={(image) => setMobileImage({ url: image.url, id: image._id })} />
+                </div>
             </div>
 
-            {/* Save Button */}
-            {uploadedImages.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <button
-                        onClick={handleSaveBanner}
-                        disabled={isSaving || uploadedImages.length === 0}
-                        className="w-full py-3 px-6 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2 text-lg"
-                    >
-                        {isSaving ? (
-                            <>
-                                <AiOutlineLoading3Quarters className="h-5 w-5 animate-spin" />
-                                Saving...
-                            </>
-                        ) : (
-                            <>
-                                <MdCheckCircle className="h-5 w-5" />
-                                Save as Banner
-                            </>
-                        )}
-                    </button>
-                </div>
-            )}
-
-            {/* Empty State */}
-            {previewImages.length === 0 && uploadedImages.length === 0 && (
-                <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-                    <MdImage className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                    <p className="text-gray-600">No images selected yet</p>
-                    <p className="text-sm text-gray-500 mt-1">Click the upload area above to get started</p>
-                </div>
-            )}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <button
+                    onClick={handleSaveBanner}
+                    disabled={isSaving || !desktopImage || !mobileImage}
+                    className="w-full py-3 px-6 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2 text-lg"
+                >
+                    {isSaving ? (
+                        <>
+                            <AiOutlineLoading3Quarters className="h-5 w-5 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        <>
+                            <MdCheckCircle className="h-5 w-5" />
+                            Save Responsive Banner
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
     );
 };

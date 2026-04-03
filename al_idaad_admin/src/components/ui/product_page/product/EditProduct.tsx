@@ -58,6 +58,7 @@ const EditProduct = ({ id }: { id: string }) => {
 
     // Core fields
     const [name, setName] = useState<string>("");
+    const [shortDescription, setShortDescription] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [brand, setBrand] = useState<string>("");
     const [category, setCategory] = useState<{ _id: string; name: string } | null>(null);
@@ -116,6 +117,7 @@ const EditProduct = ({ id }: { id: string }) => {
                 const data = res.data.data;
 
                 setName(data.name);
+                setShortDescription(data.shortDescription ?? "");
                 setDescription(data.description);
                 setBrand(data.brand ?? "");
                 setCategory(data.category);
@@ -227,6 +229,15 @@ const EditProduct = ({ id }: { id: string }) => {
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!name || !shortDescription || !description || !category) {
+            Swal.fire({
+                icon: "warning",
+                title: "Invalid Input",
+                text: "Please fill in all required fields correctly.",
+            });
+            return;
+        }
+
         if (productMode === "variants") {
             const invalid = variants.some((v) => !v.size);
             if (invalid) {
@@ -270,6 +281,7 @@ const EditProduct = ({ id }: { id: string }) => {
 
         const productData = {
             name,
+            shortDescription,
             description,
             brand,
             category: findMainParentById(productCategories, category?._id ?? ""),
@@ -397,6 +409,16 @@ const EditProduct = ({ id }: { id: string }) => {
 
                     {/* ── Multiple images uploader ── */}
                     <MultipleImageUploader onMultipleUpload={(props) => handleAddProductImages(props)} />
+
+                    {/* ── Short Description ── */}
+                    <div className="space-y-2">
+                        <label htmlFor="shortDescription" className="text-sm font-medium text-text_normal">
+                            Short Description
+                        </label>
+                        <div className="border border-border rounded">
+                            <RichTextEditor content={shortDescription} onChange={(content) => setShortDescription(content)} />
+                        </div>
+                    </div>
 
                     {/* ── Description ── */}
                     <div className="space-y-2">

@@ -69,6 +69,7 @@ export interface AttarSize {
 export interface ProductType {
     _id: string;
     name: string;
+    shortDescription?: string;
     description: string;
     brand?: string;
     category: {
@@ -123,7 +124,9 @@ export interface GetProductsResponseType {
 //banner----------------------------------------
 export interface BannerType {
     _id: string;
-    url: string;
+    url?: string;
+    desktopUrl?: string;
+    mobileUrl?: string;
     createdAt: string; // ISO date string
     updatedAt: string; // ISO date string
 }
@@ -135,7 +138,9 @@ export interface GetBannerResponseType {
 // offer banner-----------------------------------
 export type OfferType = {
     _id: string;
-    url: string;
+    url?: string;
+    desktopUrl?: string;
+    mobileUrl?: string;
     productId: string;
     createdAt: string;
     updatedAt: string;

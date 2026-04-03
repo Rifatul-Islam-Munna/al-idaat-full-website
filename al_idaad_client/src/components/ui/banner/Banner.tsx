@@ -7,18 +7,30 @@ const Banner = async () => {
     const banners = await getBanners();
 
     if (!banners || banners.length === 0) return null;
+    const desktopUrl = banners[0].desktopUrl || banners[0].url;
+    const mobileUrl = banners[0].mobileUrl || desktopUrl;
+
+    if (!desktopUrl) return null;
 
     return (
-        <div className="relative w-full h-70 sm:h-90 md:h-110 lg:h-130 xl:h-auto aspect-50/19">
+        <div className="relative w-full aspect-[4/5] md:aspect-[50/19]">
             {/* Server-rendered static hero image */}
             <div className="absolute inset-0 z-10">
                 <Image
-                    src={banners[0].url}
-                    alt="al idaad shop"
+                    src={mobileUrl!}
+                    alt="al idaad shop mobile banner"
                     fill
                     priority
                     sizes="100vw"
-                    className="w-full h-70 sm:h-90 md:h-110 lg:h-130 xl:h-auto aspect-50/19 object-center object-cover"
+                    className="object-center object-cover md:hidden"
+                />
+                <Image
+                    src={desktopUrl}
+                    alt="al idaad shop banner"
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="hidden object-center object-cover md:block"
                 />
             </div>
 
