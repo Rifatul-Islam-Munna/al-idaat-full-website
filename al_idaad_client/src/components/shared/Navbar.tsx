@@ -40,6 +40,7 @@ const Navbar = ({ categories }: NavbarProps) => {
 
   const links = [
     { href: "/", label: "Home" },
+    { href: "/all-products", label: "Product" },
     { href: "/blog", label: "Blog" },
     { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
@@ -79,7 +80,7 @@ const Navbar = ({ categories }: NavbarProps) => {
 
           {/* Desktop Links */}
           <div className="hidden lg:flex items-center gap-2">
-            {links.map(({ href, label }) => {
+            {links?.splice(0, 2).map(({ href, label }) => {
               const isActive =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -138,8 +139,29 @@ const Navbar = ({ categories }: NavbarProps) => {
               </div>
             </div>
 
+            {links?.splice(0, 3).map(({ href, label }) => {
+              const isActive =
+                href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative px-3 py-2 rounded-full text-sm font-medium tracking-wide
+                    transition-colors duration-200
+                    ${
+                      isActive
+                        ? "text-brand bg-brand/8"
+                        : "text-text_normal hover:text-text_dark hover:bg-gray-50"
+                    }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+
             {/* Optional all products direct link */}
-            <Link
+            {/*  <Link
               href="/all-products"
               className={`relative px-3 py-2 rounded-full text-sm font-medium tracking-wide
                 transition-colors duration-200
@@ -150,7 +172,7 @@ const Navbar = ({ categories }: NavbarProps) => {
                 }`}
             >
               Products
-            </Link>
+            </Link> */}
           </div>
 
           {/* Actions */}
