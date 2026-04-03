@@ -167,6 +167,22 @@ export interface GetSingleProductResponseType {
     success: boolean;
     data: ProductType;
 }
+// customer reviews------------------------------------
+export interface CustomerReviewType {
+    _id: string;
+    name: string;
+    location?: string;
+    review: string;
+    rating: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GetCustomerReviewsResponseType {
+    success: boolean;
+    count: number;
+    data: CustomerReviewType[];
+}
 // offer banner------------------------------------
 export type OfferType = {
     _id: string;

@@ -48,6 +48,11 @@ const Sidebar = () => {
             path: "/product",
         },
         {
+            name: "Reviews",
+            icon: blog,
+            path: "/customer-reviews",
+        },
+        {
             name: "Order",
             icon: order,
             path: "/order",

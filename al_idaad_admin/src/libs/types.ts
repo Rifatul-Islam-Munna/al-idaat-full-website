@@ -121,6 +121,22 @@ export interface GetProductsResponseType {
     count: number;
     data: ProductType[];
 }
+// customer reviews----------------------------------------
+export interface CustomerReviewType {
+    _id: string;
+    name: string;
+    location?: string;
+    review: string;
+    rating: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GetCustomerReviewsResponseType {
+    success: boolean;
+    count: number;
+    data: CustomerReviewType[];
+}
 //banner----------------------------------------
 export interface BannerType {
     _id: string;

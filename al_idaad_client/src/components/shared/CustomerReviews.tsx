@@ -1,51 +1,9 @@
 "use client";
 
+import { CustomerReviewType } from "@/utils/types";
 import { useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { FaStar, FaRegStar } from "react-icons/fa";
-
-type Review = {
-  id: number;
-  name: string;
-  location?: string;
-  review: string;
-  rating: number;
-};
-
-const reviews: Review[] = [
-  {
-    id: 1,
-    name: "Abdullah Rahman",
-    location: "Dhaka",
-    review:
-      "Excellent quality and very comfortable. The fabric feels premium and delivery was fast.",
-    rating: 5,
-  },
-  {
-    id: 2,
-    name: "Nafis Islam",
-    location: "Chattogram",
-    review:
-      "Really happy with the purchase. Clean stitching, nice finishing, and the fit was perfect.",
-    rating: 5,
-  },
-  {
-    id: 3,
-    name: "Samiul Hasan",
-    location: "Sylhet",
-    review:
-      "Beautiful product and packaging. Looks even better in real life than in the pictures.",
-    rating: 4,
-  },
-  {
-    id: 4,
-    name: "Tanvir Ahmed",
-    location: "Rajshahi",
-    review:
-      "Very good service and authentic product. I will definitely order again from Al Idaad.",
-    rating: 5,
-  },
-];
 
 const StarRating = ({ rating }: { rating: number }) => {
   return (
@@ -61,8 +19,15 @@ const StarRating = ({ rating }: { rating: number }) => {
   );
 };
 
-const CustomerReviewSlider = () => {
+const CustomerReviewSlider = ({ reviews }: { reviews: CustomerReviewType[] }) => {
   const [current, setCurrent] = useState(0);
+
+  if (reviews.length === 0) {
+    return null;
+  }
+
+  const activeIndex = current >= reviews.length ? 0 : current;
+  const activeReview = reviews[activeIndex];
 
   const prevSlide = () => {
     setCurrent((prev) => (prev === 0 ? reviews.length - 1 : prev - 1));
@@ -73,7 +38,7 @@ const CustomerReviewSlider = () => {
   };
 
   return (
-    <section className=" py-3 lg:py-5">
+    <section className="py-3 lg:py-5">
       <div className="text-center mb-8">
         <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-3">
           Testimonials
@@ -89,19 +54,19 @@ const CustomerReviewSlider = () => {
 
       <div className="relative max-w-3xl mx-auto">
         <div className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-8">
-          <StarRating rating={reviews[current].rating} />
+          <StarRating rating={activeReview.rating} />
 
           <p className="mt-4 text-base sm:text-lg leading-7 text-gray-700">
-            “{reviews[current].review}”
+            &ldquo;{activeReview.review}&rdquo;
           </p>
 
           <div className="mt-6">
             <p className="text-sm font-semibold text-gray-900">
-              {reviews[current].name}
+              {activeReview.name}
             </p>
-            {reviews[current].location && (
+            {activeReview.location && (
               <p className="text-xs text-gray-400 mt-1">
-                {reviews[current].location}
+                {activeReview.location}
               </p>
             )}
           </div>
@@ -123,7 +88,7 @@ const CustomerReviewSlider = () => {
                 onClick={() => setCurrent(index)}
                 aria-label={`Go to review ${index + 1}`}
                 className={`h-2.5 rounded-full transition-all duration-300 ${
-                  current === index ? "w-6 bg-brand" : "w-2.5 bg-gray-300"
+                  activeIndex === index ? "w-6 bg-brand" : "w-2.5 bg-gray-300"
                 }`}
               />
             ))}

@@ -7,9 +7,12 @@ import ChoouseUs from "@/components/ui/choose-us/ChoouseUs";
 import FeaturedProduct from "@/components/ui/featured/FeaturedProduct";
 import Offer from "@/components/ui/offer/Offer";
 import OurProduct from "@/components/ui/our-product/OurProduct";
+import { getCustomerReviews } from "@/utils/fetchData";
 // import Link from "next/link";
 
-const Homepage = () => {
+const Homepage = async () => {
+  const customerReviews = await getCustomerReviews();
+
   return (
     <div>
       <div className="relative">
@@ -23,7 +26,7 @@ const Homepage = () => {
         <Offer></Offer>
         <BestSoldProduct></BestSoldProduct>
         <OurProduct></OurProduct>
-        <CustomerReviews />
+        <CustomerReviews reviews={customerReviews} />
         <ChoouseUs></ChoouseUs>
         <Blog></Blog>
       </div>

@@ -52,12 +52,6 @@ const Navbar = ({ categories }: NavbarProps) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    setIsSearchOpen(false);
-    setIsMenuOpen(false);
-    setIsCategoryOpen(false);
-  }, [pathname]);
-
   return (
     <>
       {/* ── Main Nav ── */}

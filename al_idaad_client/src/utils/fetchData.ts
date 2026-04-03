@@ -9,6 +9,7 @@ import {
     GetAllBlogsResponseType,
     GetAllCategoriesResponseType,
     GetAllProductsResponseType,
+    GetCustomerReviewsResponseType,
     GetCategoryImagesResponseType,
     GetOfferBannerResponseType,
     GetSingleBlogCategoryResponseType,
@@ -17,6 +18,7 @@ import {
     GetSingleProductResponseType,
     OfferType,
     ProductType,
+    CustomerReviewType,
 } from "./types";
 
 // ----------------------------------------------------------------------------------------------------
@@ -124,6 +126,16 @@ export const getSingleProduct = async (identifier: string): Promise<ProductType>
 
     const data: GetSingleProductResponseType = await res.json();
     return data.data;
+};
+// get customer reviews
+export const getCustomerReviews = async (): Promise<CustomerReviewType[]> => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-reviews`, {
+        next: { revalidate: 1},
+    });
+
+    const result: GetCustomerReviewsResponseType = await res.json();
+
+    return result.data;
 };
 // ----------------------------------------------------------------------------------------------------
 // get offer banner

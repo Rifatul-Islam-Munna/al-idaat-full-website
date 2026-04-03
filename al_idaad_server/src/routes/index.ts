@@ -12,6 +12,7 @@ import orderRoutes from "./order.routes";
 import webhookRoutes from "./webhook.routes";
 import offerRoutes from "./offer.routes";
 import categoryImageRoutes from "./category_image.routes";
+import customerReviewRoutes from "./customer_review.routes";
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use("/orders", orderRoutes);
 router.use("/", webhookRoutes);
 router.use("/offers", offerRoutes);
 router.use("/category-images", categoryImageRoutes);
+router.use("/customer-reviews", customerReviewRoutes);
 
 export default router;
