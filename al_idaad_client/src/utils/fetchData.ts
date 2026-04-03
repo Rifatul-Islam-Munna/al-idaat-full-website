@@ -25,7 +25,7 @@ import {
 // get all blogs
 export const getBlogs = async (): Promise<BlogType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetAllBlogsResponseType = await res.json();

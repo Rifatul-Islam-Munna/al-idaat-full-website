@@ -8,7 +8,9 @@ import { CartProvider } from "@/components/shared/CartContext";
 import WhatsApp from "@/components/shared/WhatsApp";
 import { AuthProvider } from "@/components/shared/AuthContext";
 import { getCategories } from "@/utils/fetchData";
-
+import { GoogleTagManager } from "@next/third-parties/google";
+import { Suspense } from "react";
+import { PageViewTracker } from "@/utils/PageViewTracker";
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
@@ -77,7 +79,11 @@ export default async function RootLayout({
         className={`${playfair.variable} antialiased bg-bg_main text-text_dark font-inter select-none`}
       >
         <AuthProvider>
+          <Suspense>
+            <PageViewTracker />
+          </Suspense>
           <CartProvider>
+            <GoogleTagManager gtmId="GTM-N6XMSPHC" />
             <div className="max-w-480 mx-auto pt-18 md:pt-25">
               <Navbar categories={categories} />
               {children}
