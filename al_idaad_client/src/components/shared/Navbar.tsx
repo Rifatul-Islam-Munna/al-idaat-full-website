@@ -104,11 +104,7 @@ const Navbar = ({ categories }: NavbarProps) => {
                 type="button"
                 className={`relative px-3 py-2 rounded-full text-sm font-medium tracking-wide
                   transition-colors duration-200 flex items-center gap-2
-                  ${
-                    pathname.startsWith("/all-products")
-                      ? "text-brand bg-brand/8"
-                      : "text-text_normal hover:text-text_dark hover:bg-gray-50"
-                  }`}
+                  text-text_normal hover:text-text_dark hover:bg-gray-50`}
               >
                 Category
                 <span className="text-[10px] leading-none mt-[1px]">▼</span>
@@ -265,7 +261,9 @@ const Navbar = ({ categories }: NavbarProps) => {
             href={profileHref}
             onClick={() => setIsMenuOpen(false)}
             className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-150 ${
-              pathname.startsWith("/profile") || pathname.startsWith("/login") || pathname.startsWith("/register")
+              pathname.startsWith("/profile") ||
+              pathname.startsWith("/login") ||
+              pathname.startsWith("/register")
                 ? "bg-brand text-white"
                 : "text-text_normal bg-transparent hover:bg-gray-50 hover:text-text_dark"
             }`}
