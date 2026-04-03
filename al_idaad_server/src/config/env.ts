@@ -16,7 +16,9 @@ const envSchema = z.object({
     MINIO_URL: z.string().optional(),
     MINIO_ACCESS_KEY: z.string().optional(),
     MINIO_SECRET_KEY: z.string().optional(),
-     CORS_ORIGINS: z.string().min(1), 
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
+    TELEGRAM_CHAT_ID: z.string().optional(),
+    CORS_ORIGINS: z.string().min(1), 
     ADMIN_KEY: z.string(),
 });
 

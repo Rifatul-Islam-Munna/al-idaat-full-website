@@ -5,6 +5,8 @@ import AppError from "../utils/AppError";
 import { createOrderService } from "../services/order.service";
 import { env } from "../config/env";
 import { AccessTokenPayload } from "../utils/tokens";
+import { TelegramService } from "../services/telegram.service";
+import { formatOrderMessage } from "../utils/telegram-templates";
 
 const getOptionalAuthenticatedUserId = (req: Request) => {
     const authHeader = req.headers.authorization;
@@ -63,13 +65,22 @@ export const getSingleOrder = async (req: Request, res: Response) => {
         data: order,
     });
 };
-
+const telegramService = new TelegramService();
 export const createOrder = async (req: Request, res: Response) => {
     const userId = getOptionalAuthenticatedUserId(req);
     const { order, tracking_code, consignment_id, steadfastSuccess } = await createOrderService({
         ...req.body,
         ...(userId ? { userId } : {}),
     });
+    
+     telegramService
+  .sendMessage({
+    message: formatOrderMessage(order, tracking_code, consignment_id),
+    isHTML: true,
+  })
+  .catch(() => {});
+  
+
 
     res.status(201).json({
         success: true,
