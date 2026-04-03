@@ -5,13 +5,15 @@ import Link from "next/link";
 import type { Swiper as SwiperType } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { ProductType, ProductVariant, AttarSize } from "@/utils/types";
+import { useAuth } from "@/components/shared/AuthContext";
 import { useCart } from "@/components/shared/CartContext";
 import WishlistButton from "@/components/shared/WishlistButton";
 import { buildCartKey } from "@/utils/helper";
+import { createGtmEventId, getGtmUserMeta, viewcontentEvent } from "@/utils/google-tag-manager";
 import ReturnPolicy from "./ReturnPolicy";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -179,6 +181,7 @@ const VariantSelector = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const ProductDetailsClient = ({ product }: { product: ProductType }) => {
+  const { user, loading: authLoading } = useAuth();
   const { addItem, isInCart, items } = useCart();
   const router = useRouter();
 
@@ -220,11 +223,36 @@ const ProductDetailsClient = ({ product }: { product: ProductType }) => {
     null,
   );
   const [selectedAttar, setSelectedAttar] = useState<AttarSize | null>(null);
+  const trackedViewRef = useRef<string | null>(null);
 
   // ── Price helpers ─────────────────────────────────────────────────────────
 
   const applyDiscount = (p: number): number =>
     discountPercentage ? Math.round(p * (1 - discountPercentage / 100)) : p;
+
+  const discountedBasePrice = discountPercentage
+    ? Math.round(price * (1 - discountPercentage / 100))
+    : undefined;
+
+  useEffect(() => {
+    if (authLoading || trackedViewRef.current === product._id) {
+      return;
+    }
+
+    trackedViewRef.current = product._id;
+
+    void viewcontentEvent({
+      event_id: createGtmEventId(),
+      ...getGtmUserMeta(user),
+      _id: product._id,
+      slug: product.slug,
+      name: product.name,
+      brandName: product.brand,
+      category: product.category.name,
+      price: product.price,
+      offerPrice: discountedBasePrice,
+    });
+  }, [authLoading, discountedBasePrice, product, user]);
 
   const resolvedSinglePrice: number | null = (() => {
     if (hasVariants && selectedVariant?.price != null)

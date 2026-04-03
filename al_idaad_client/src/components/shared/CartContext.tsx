@@ -1,7 +1,9 @@
 "use client";
 
 import { ProductType, ProductVariant, AttarSize } from "@/utils/types";
+import { addToCartEvent, createGtmEventId, getGtmUserMeta } from "@/utils/google-tag-manager";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useAuth } from "./AuthContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,6 +80,23 @@ export const buildCartKey = (product: ProductType, variant?: ProductVariant, att
     return product._id;
 };
 
+const getTrackingVariant = (selectedVariant?: ProductVariant, selectedAttarSize?: AttarSize) => {
+    if (selectedVariant) {
+        return {
+            size: selectedVariant.size,
+            color: selectedVariant.color,
+        };
+    }
+
+    if (selectedAttarSize) {
+        return {
+            size: `${selectedAttarSize.ml} ml`,
+        };
+    }
+
+    return undefined;
+};
+
 // ─── Context ──────────────────────────────────────────────────────────────────
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -85,6 +104,8 @@ const CartContext = createContext<CartContextValue | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+    const { user } = useAuth();
+
     // Lazy initializer — reads localStorage once, no cascading render
     const [items, setItems] = useState<CartItem[]>(loadCartFromStorage);
 
@@ -101,6 +122,19 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     // ── Actions ───────────────────────────────────────────────────────────────
 
     const addItem = useCallback(({ product, selectedVariant, selectedAttarSize, resolvedPrice }: AddItemPayload) => {
+        void addToCartEvent({
+            event_id: createGtmEventId(),
+            ...getGtmUserMeta(user),
+            productId: product._id,
+            slug: product.slug,
+            name: product.name,
+            brandName: product.brand,
+            category: product.category.name,
+            unitPrice: resolvedPrice,
+            quantity: 1,
+            variant: getTrackingVariant(selectedVariant, selectedAttarSize),
+        });
+
         const cartKey = buildCartKey(product, selectedVariant, selectedAttarSize);
         setItems((prev) => {
             const existingIndex = prev.findIndex((i) => i.cartKey === cartKey);
@@ -121,15 +155,30 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             };
             return [...prev, newItem];
         });
-    }, []);
+    }, [user]);
 
     const removeItem = useCallback((cartKey: string) => {
         setItems((prev) => prev.filter((item) => item.cartKey !== cartKey));
     }, []);
 
     const increaseQty = useCallback((cartKey: string) => {
+        const item = items.find((entry) => entry.cartKey === cartKey);
+
+        if (item) {
+            void addToCartEvent({
+                event_id: createGtmEventId(),
+                ...getGtmUserMeta(user),
+                productId: item._id,
+                name: item.name,
+                category: item.category.name,
+                unitPrice: item.price,
+                quantity: 1,
+                variant: getTrackingVariant(item.selectedVariant, item.selectedAttarSize),
+            });
+        }
+
         setItems((prev) => prev.map((item) => (item.cartKey === cartKey ? { ...item, quantity: item.quantity + 1 } : item)));
-    }, []);
+    }, [items, user]);
 
     const decreaseQty = useCallback((cartKey: string) => {
         setItems((prev) =>

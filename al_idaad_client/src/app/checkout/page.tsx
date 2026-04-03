@@ -2,9 +2,10 @@
 
 import { useAuth } from "@/components/shared/AuthContext";
 import { CartItem, useCart } from "@/components/shared/CartContext";
+import { createGtmEventId, getGtmUserMeta, initiateCheckoutEvent, purchaseEvent } from "@/utils/google-tag-manager";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,6 +28,23 @@ const INITIAL_FORM: FormData = {
     city: "",
     district: "",
     note: "",
+};
+
+const getTrackingVariant = (item: CartItem) => {
+    if (item.selectedVariant) {
+        return {
+            size: item.selectedVariant.size,
+            color: item.selectedVariant.color,
+        };
+    }
+
+    if (item.selectedAttarSize) {
+        return {
+            size: `${item.selectedAttarSize.ml} ml`,
+        };
+    }
+
+    return undefined;
 };
 
 // ─── Success Screen ───────────────────────────────────────────────────────────
@@ -133,7 +151,7 @@ const OrderSuccess = ({
 // ─── Checkout Page ────────────────────────────────────────────────────────────
 
 const CheckoutPage = () => {
-    const { user, authFetch } = useAuth();
+    const { user, authFetch, loading: authLoading } = useAuth();
     const { items, totalPrice, totalQty, clearCart, increaseQty, decreaseQty, removeItem } = useCart();
     const [formDraft, setFormDraft] = useState<Partial<FormData>>({});
     const [errors, setErrors] = useState<Partial<FormData>>({});
@@ -158,6 +176,28 @@ const CheckoutPage = () => {
         }),
         [formDraft, user],
     );
+    const checkoutTrackedRef = useRef(false);
+
+    useEffect(() => {
+        if (authLoading || checkoutTrackedRef.current || orderResult || items.length === 0) {
+            return;
+        }
+
+        checkoutTrackedRef.current = true;
+
+        void initiateCheckoutEvent({
+            event_id: createGtmEventId(),
+            ...getGtmUserMeta(user),
+            items: items.map((item) => ({
+                productId: item._id,
+                name: item.name,
+                category: item.category.name,
+                unitPrice: item.price,
+                quantity: item.quantity,
+                variant: getTrackingVariant(item),
+            })),
+        });
+    }, [authLoading, items, orderResult, user]);
 
     if (items.length === 0 && !orderResult) {
         return (
@@ -305,10 +345,29 @@ const CheckoutPage = () => {
             // ✅ Extract tracking_code and orderId from the updated backend response shape:
             // { success: true, data: { orderId, tracking_code, consignment_id, steadfastSuccess } }
             const { orderId, tracking_code, steadfastSuccess } = data.data;
+            const resolvedOrderId = orderId ?? `ORD-${Date.now()}`;
+
+            void purchaseEvent({
+                event_id: createGtmEventId(),
+                ...getGtmUserMeta(user),
+                orderId: resolvedOrderId,
+                orderTotal: grandTotal,
+                totalDiscount: 0,
+                shipping: deliveryCharge,
+                products: items.map((item) => ({
+                    productId: item._id,
+                    name: item.name,
+                    category: item.category.name,
+                    unitPrice: item.price,
+                    quantity: item.quantity,
+                    totalPrice: item.price * item.quantity,
+                    variant: getTrackingVariant(item),
+                })),
+            });
 
             clearCart();
             setOrderResult({
-                orderId: orderId ?? `ORD-${Date.now()}`,
+                orderId: resolvedOrderId,
                 trackingCode: tracking_code ?? "",
                 steadfastSuccess: steadfastSuccess ?? false,
             });

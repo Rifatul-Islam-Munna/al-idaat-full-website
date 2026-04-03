@@ -42,6 +42,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+let refreshRequest: Promise<string> | null = null;
 
 const getMessageFromResponse = async (res: Response) => {
   try {
@@ -58,18 +59,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const accessTokenRef = useRef<string | null>(null);
 
   const refreshAccessToken = useCallback(async () => {
-    const res = await fetch(`${API_URL}/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-    });
+    if (!refreshRequest) {
+      refreshRequest = (async () => {
+        const res = await fetch(`${API_URL}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
 
-    if (!res.ok) {
-      throw new Error(await getMessageFromResponse(res));
+        if (!res.ok) {
+          throw new Error(await getMessageFromResponse(res));
+        }
+
+        const data: AuthSuccessResponse = await res.json();
+        return data.accessToken;
+      })().finally(() => {
+        refreshRequest = null;
+      });
     }
 
-    const data: AuthSuccessResponse = await res.json();
-    accessTokenRef.current = data.accessToken;
-    return data.accessToken;
+    const token = await refreshRequest;
+    accessTokenRef.current = token;
+    return token;
   }, []);
 
   const fetchCurrentUser = useCallback(async (token: string) => {

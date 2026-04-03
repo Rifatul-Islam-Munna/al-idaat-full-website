@@ -1,56 +1,97 @@
 import { sendGTMEvent } from "@next/third-parties/google";
+import { type UserType } from "./types";
 
-
-
-interface Product {
+type Product = {
   _id: string;
   slug?: string;
   name: string;
   brandName?: string;
   category?: string;
   subMain?: string;
-  hasOffer?: boolean;
   offerPrice?: number;
   price: number;
-}
+};
 
-interface CartItem {
+export type GtmItemSelection = {
+  size?: string;
+  color?: string;
+};
+
+export interface GtmCartItem {
   productId: string;
   slug?: string;
   name: string;
   brandName?: string;
+  category?: string;
+  subMain?: string;
   unitPrice: number;
   quantity: number;
-  variant: {
-    size: string;
-    color: string;
-  };
+  variant?: GtmItemSelection;
 }
-
-// ─── Shared user/event metadata ─────────────────────────────────────────────
 
 type Extra = {
   event_id: string;
-  userId: string | undefined;
-  userName: string | undefined;
-  email: string | undefined;
+  userId?: string;
+  userName?: string;
+  email?: string;
 };
 
-// ─── Events ─────────────────────────────────────────────────────────────────
+export type GtmUser = Pick<UserType, "_id" | "name" | "email"> | null | undefined;
+
+export const createGtmEventId = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `gtm-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+export const getGtmUserMeta = (user: GtmUser): Omit<Extra, "event_id"> => ({
+  userId: user?._id,
+  userName: user?.name,
+  email: user?.email,
+});
+
+const getItemVariant = (variant?: GtmItemSelection) => {
+  const size = variant?.size?.trim();
+  const color = variant?.color?.trim();
+
+  if (size && color) {
+    return `${size} / ${color}`;
+  }
+
+  return size || color || undefined;
+};
+
+const mapCartItemToGtmItem = (item: GtmCartItem) => {
+  const itemVariant = getItemVariant(item.variant);
+
+  return {
+    item_id: item.slug ?? item.productId,
+    item_name: item.name,
+    item_brand: item.brandName,
+    item_category: item.category,
+    item_category2: item.subMain,
+    ...(itemVariant ? { item_variant: itemVariant } : {}),
+    price: item.unitPrice,
+    quantity: item.quantity,
+  };
+};
 
 export const viewcontentEvent = (payload: Product & Extra) => {
-  console.log("sending-payload-for-product-view", payload);
+  const price = payload.offerPrice ?? payload.price;
+
   return sendGTMEvent({
     event: "view_item",
-    event_id: payload._id,
+    event_id: payload.event_id,
     user_data: {
-      user_id: payload?.userId,
-      name: payload?.userName,
-      email: payload?.email,
+      user_id: payload.userId,
+      name: payload.userName,
+      email: payload.email,
     },
     ecommerce: {
       currency: "BDT",
-      value: payload.offerPrice ?? payload.price,
+      value: price,
       items: [
         {
           item_id: payload.slug ?? payload._id,
@@ -58,7 +99,7 @@ export const viewcontentEvent = (payload: Product & Extra) => {
           item_brand: payload.brandName,
           item_category: payload.category,
           item_category2: payload.subMain,
-          price: payload.hasOffer ? payload.offerPrice : payload.price,
+          price,
           quantity: 1,
         },
       ],
@@ -66,8 +107,7 @@ export const viewcontentEvent = (payload: Product & Extra) => {
   });
 };
 
-export const addToCartEvent = (payload: CartItem & Extra) => {
-  console.log("sending-payload-for-add-to-cart", payload);
+export const addToCartEvent = (payload: GtmCartItem & Extra) => {
   return sendGTMEvent({
     event: "add_to_cart",
     event_id: payload.event_id,
@@ -78,33 +118,17 @@ export const addToCartEvent = (payload: CartItem & Extra) => {
     },
     ecommerce: {
       currency: "BDT",
-      value: payload.unitPrice,
-      items: [
-        {
-          item_id: payload.slug ?? payload.productId,
-          item_name: payload.name,
-          item_brand: payload.brandName,
-          item_variant: `${payload.variant.size} / ${payload.variant.color}`,
-          price: payload.unitPrice,
-          quantity: payload?.quantity ?? 1,
-          description: "tiger-vai-product",
-          item_category: "product",
-        },
-      ],
+      value: payload.unitPrice * payload.quantity,
+      items: [mapCartItemToGtmItem(payload)],
     },
   });
 };
 
-export interface BeginCheckoutPayload {
-  event_id: string;
-  userId?: string;
-  userName?: string;
-  email?: string;
-  items: CartItem[];
+export interface BeginCheckoutPayload extends Extra {
+  items: GtmCartItem[];
 }
 
 export const initiateCheckoutEvent = (payload: BeginCheckoutPayload) => {
-  console.log("sending-payload-for-checkout", payload);
   return sendGTMEvent({
     event: "begin_checkout",
     event_id: payload.event_id,
@@ -115,41 +139,27 @@ export const initiateCheckoutEvent = (payload: BeginCheckoutPayload) => {
     },
     ecommerce: {
       currency: "BDT",
-      value: payload.items.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      ),
-      items: payload.items,
+      value: payload.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+      items: payload.items.map(mapCartItemToGtmItem),
     },
   });
 };
 
-export const purchaseEvent = (payload: {
-  event_id: string;
-  orderId: string;           // ⚠️ was missing from original type but used below
-  userId: string | undefined;
-  userName: string | undefined;
-  email: string | undefined;
+export interface PurchaseProduct extends GtmCartItem {
+  totalPrice: number;
+  discountApplied?: number;
+  sku?: string;
+}
+
+export interface PurchaseEventPayload extends Extra {
+  orderId: string;
   orderTotal: number;
   totalDiscount: number;
-  products: Array<{
-    productId: string;
-    slug: string;
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-    discountApplied?: number;
-    variant: {
-      size: string;
-      color: string;
-      price: number;
-      discountPrice?: number;
-      sku?: string;
-    };
-  }>;
-}) => {
-  console.log("sending-payload-for-purchase", payload);
+  shipping?: number;
+  products: PurchaseProduct[];
+}
+
+export const purchaseEvent = (payload: PurchaseEventPayload) => {
   return sendGTMEvent({
     event: "purchase",
     event_id: payload.event_id,
@@ -162,17 +172,13 @@ export const purchaseEvent = (payload: {
       transaction_id: payload.orderId,
       currency: "BDT",
       value: payload.orderTotal,
+      ...(typeof payload.shipping === "number" ? { shipping: payload.shipping } : {}),
       discount: payload.totalDiscount,
-      items: payload.products.map((p) => ({
-        item_id: p.productId,
-        item_name: p.name,
-        item_brand: p.slug,
-        item_variant: `${p.variant.size} / ${p.variant.color}`,
-        price: p.unitPrice,
-        quantity: p.quantity,
-        item_category: "product",
-        ...(p.variant.sku && { item_sku: p.variant.sku }),
-      })),
+      items: payload.products.map((product) => {
+        const item = mapCartItemToGtmItem(product);
+
+        return product.sku ? { ...item, item_sku: product.sku } : item;
+      }),
     },
   });
 };

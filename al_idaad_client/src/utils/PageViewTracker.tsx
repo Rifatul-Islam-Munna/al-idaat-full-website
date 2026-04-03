@@ -3,8 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { v4 as uuidv4 } from "uuid";
-import { pageViewEvent } from "./google-tag-manager";
+import { createGtmEventId, pageViewEvent } from "./google-tag-manager";
 
 export function PageViewTracker() {
   const pathname = usePathname();
@@ -17,8 +16,8 @@ export function PageViewTracker() {
 
     // Small delay to ensure document.title is updated
     const timer = setTimeout(() => {
-      pageViewEvent({
-        event_id: uuidv4(),
+      void pageViewEvent({
+        event_id: createGtmEventId(),
         url: url,
         page_title: document.title,
       });

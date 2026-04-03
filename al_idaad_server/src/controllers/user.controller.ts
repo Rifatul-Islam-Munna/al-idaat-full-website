@@ -246,6 +246,7 @@ export const refresh = async (req: Request, res: Response) => {
     try {
         payload = jwt.verify(token, env.REFRESH_SECRET) as RefreshTokenPayload;
     } catch {
+        res.clearCookie("refreshToken", getRefreshCookieOptions());
         return res.status(403).json({
             success: false,
             message: "Invalid token",
@@ -254,14 +255,29 @@ export const refresh = async (req: Request, res: Response) => {
 
     const oldSession = await Session.findById(payload.sid);
 
-    if (!oldSession || !oldSession.valid) {
-        if (oldSession) {
-            await Session.updateMany({ userId: oldSession.userId }, { valid: false });
-        }
-
+    if (!oldSession) {
+        res.clearCookie("refreshToken", getRefreshCookieOptions());
         return res.status(403).json({
             success: false,
-            message: "Invalid or reused token detected",
+            message: "Session not found",
+        });
+    }
+
+    if (!oldSession.valid) {
+        res.clearCookie("refreshToken", getRefreshCookieOptions());
+        return res.status(403).json({
+            success: false,
+            message: "Session already rotated",
+        });
+    }
+
+    if (oldSession.expiresAt.getTime() <= Date.now()) {
+        oldSession.valid = false;
+        await oldSession.save();
+        res.clearCookie("refreshToken", getRefreshCookieOptions());
+        return res.status(403).json({
+            success: false,
+            message: "Session expired",
         });
     }
 
