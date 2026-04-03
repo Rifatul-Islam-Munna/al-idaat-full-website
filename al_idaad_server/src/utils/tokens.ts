@@ -1,27 +1,15 @@
 import jwt, { SignOptions } from "jsonwebtoken";
-import { env } from "../config/env";
 import { Types } from "mongoose";
-
-/* ------------------------------------
-   Access Token Payload Type
-------------------------------------- */
+import { env } from "../config/env";
 
 export interface AccessTokenPayload {
     id: string;
     role: "admin" | "user";
 }
 
-/* ------------------------------------
-   Refresh Token Payload Type
-------------------------------------- */
-
 export interface RefreshTokenPayload {
     sid: string;
 }
-
-/* ------------------------------------
-   Create Access Token
-------------------------------------- */
 
 export const createAccessToken = (user: { _id: Types.ObjectId; role: "admin" | "user" }): string => {
     if (!env.ACCESS_SECRET) {
@@ -34,15 +22,11 @@ export const createAccessToken = (user: { _id: Types.ObjectId; role: "admin" | "
     };
 
     const options: SignOptions = {
-        expiresIn: "15min", // ✅ Production recommended
+        expiresIn: "15min",
     };
 
     return jwt.sign(payload, env.ACCESS_SECRET, options);
 };
-
-/* ------------------------------------
-   Create Refresh Token
-------------------------------------- */
 
 export const createRefreshToken = (sessionId: Types.ObjectId): string => {
     if (!env.REFRESH_SECRET) {
@@ -54,7 +38,7 @@ export const createRefreshToken = (sessionId: Types.ObjectId): string => {
     };
 
     const options: SignOptions = {
-        expiresIn: "7d", // ✅ Standard refresh lifespan
+        expiresIn: "10d",
     };
 
     return jwt.sign(payload, env.REFRESH_SECRET, options);

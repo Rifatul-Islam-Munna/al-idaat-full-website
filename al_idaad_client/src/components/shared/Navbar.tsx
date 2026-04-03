@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CartItem, useCart } from "./CartContext";
+import { useAuth } from "./AuthContext";
 import SearchBox from "./SearchBox";
-import { FiMenu, FiX, FiSearch, FiShoppingBag } from "react-icons/fi";
+import { FiMenu, FiX, FiSearch, FiShoppingBag, FiUser } from "react-icons/fi";
 import { CategoryType } from "@/utils/types";
 
 type NavbarProps = {
@@ -35,8 +36,10 @@ const Navbar = ({ categories }: NavbarProps) => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  const { user } = useAuth();
   const { items, totalQty, totalPrice, increaseQty, decreaseQty, removeItem } =
     useCart();
+  const profileHref = user ? "/profile" : "/login";
 
   const links = [
     { href: "/", label: "Home" },
@@ -171,6 +174,17 @@ const Navbar = ({ categories }: NavbarProps) => {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
+            <Link
+              href={profileHref}
+              className="relative w-9 h-9 flex items-center justify-center rounded-full text-text_normal hover:text-text_dark hover:bg-gray-100 active:scale-95 transition duration-150"
+              aria-label={user ? "Profile" : "Login"}
+            >
+              <FiUser size={19} />
+              {user && (
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-brand" />
+              )}
+            </Link>
+
             <button
               onClick={() => setIsSearchOpen(true)}
               className="w-9 h-9 flex items-center justify-center rounded-full text-text_normal hover:text-text_dark hover:bg-gray-100 active:scale-95 transition duration-150"
@@ -247,6 +261,19 @@ const Navbar = ({ categories }: NavbarProps) => {
 
         {/* Links */}
         <nav className="flex flex-col px-3 py-4 gap-1.5">
+          <Link
+            href={profileHref}
+            onClick={() => setIsMenuOpen(false)}
+            className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-150 ${
+              pathname.startsWith("/profile") || pathname.startsWith("/login") || pathname.startsWith("/register")
+                ? "bg-brand text-white"
+                : "text-text_normal bg-transparent hover:bg-gray-50 hover:text-text_dark"
+            }`}
+          >
+            <span>{user ? "Profile" : "Login / Register"}</span>
+            <FiUser size={16} />
+          </Link>
+
           {links.map(({ href, label }) => {
             const isActive =
               href === "/" ? pathname === "/" : pathname.startsWith(href);

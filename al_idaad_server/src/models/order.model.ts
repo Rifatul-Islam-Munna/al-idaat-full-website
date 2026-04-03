@@ -1,6 +1,7 @@
 import { Schema, Document, model, Model, Types } from "mongoose";
 
 export interface IOrder extends Document {
+    userId?: Types.ObjectId;
     fullName: string;
     phone: string;
     altPhone?: string;
@@ -43,6 +44,7 @@ export interface IOrder extends Document {
 
 const OrderSchema = new Schema<IOrder>(
     {
+        userId: { type: Schema.Types.ObjectId, ref: "User" },
         fullName: { type: String, required: true },
         phone: { type: String, required: true },
         altPhone: { type: String },

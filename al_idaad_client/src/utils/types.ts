@@ -216,3 +216,86 @@ export interface GetCategoryImagesResponseType {
     count: number;
     data: CategoryImageType[];
 }
+
+// auth / profile -----------------------------------
+export interface UserType {
+    _id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    district?: string;
+    role: "admin" | "user";
+    verified?: boolean;
+    wishlist: ProductType[];
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface AuthSuccessResponse {
+    success: boolean;
+    accessToken: string;
+    message?: string;
+}
+
+export interface AuthUserResponse {
+    success: boolean;
+    data: UserType;
+}
+
+export interface ToggleWishlistResponse {
+    success: boolean;
+    inWishlist: boolean;
+    data: UserType;
+    message?: string;
+}
+
+// order history -----------------------------------
+export interface OrderItemType {
+    productId: string;
+    name: string;
+    quantity: number;
+    price: number;
+    thumbnail: string;
+    attarSize?: {
+        ml: number;
+        price: number;
+        _id: string;
+    };
+    variant?: {
+        size?: string;
+        color?: string;
+        chest?: number;
+        length?: number;
+        _id?: string;
+    };
+}
+
+export interface OrderType {
+    _id: string;
+    userId?: string;
+    fullName: string;
+    phone: string;
+    altPhone?: string;
+    address: string;
+    city: string;
+    district: string;
+    note?: string;
+    items: OrderItemType[];
+    subtotal: number;
+    deliveryCharge: number;
+    grandTotal: number;
+    paymentMethod: string;
+    steadfastTrackingCode?: string;
+    steadfastConsignmentId?: string;
+    deliveryStatus?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GetOrdersResponseType {
+    success: boolean;
+    count: number;
+    data: OrderType[];
+}

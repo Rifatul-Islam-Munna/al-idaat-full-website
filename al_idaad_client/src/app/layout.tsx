@@ -6,6 +6,7 @@ import Footer from "@/components/shared/Footer";
 import { Toaster } from "react-hot-toast";
 import { CartProvider } from "@/components/shared/CartContext";
 import WhatsApp from "@/components/shared/WhatsApp";
+import { AuthProvider } from "@/components/shared/AuthContext";
 import { getCategories } from "@/utils/fetchData";
 
 const playfair = Playfair_Display({
@@ -75,14 +76,16 @@ export default async function RootLayout({
       <body
         className={`${playfair.variable} antialiased bg-bg_main text-text_dark font-inter select-none`}
       >
-        <CartProvider>
-          <div className="max-w-480 mx-auto pt-18 md:pt-25">
-            <Navbar categories={categories} />
-            {children}
-            <Toaster position="bottom-right" reverseOrder={false} />
-            <Footer />
-          </div>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <div className="max-w-480 mx-auto pt-18 md:pt-25">
+              <Navbar categories={categories} />
+              {children}
+              <Toaster position="bottom-right" reverseOrder={false} />
+              <Footer />
+            </div>
+          </CartProvider>
+        </AuthProvider>
         <WhatsApp />
       </body>
     </html>

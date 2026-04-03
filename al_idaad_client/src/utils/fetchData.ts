@@ -130,7 +130,7 @@ export const getSingleProduct = async (identifier: string): Promise<ProductType>
 // get customer reviews
 export const getCustomerReviews = async (): Promise<CustomerReviewType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-reviews`, {
-        next: { revalidate: 1},
+        next: { revalidate: 300},
     });
 
     const result: GetCustomerReviewsResponseType = await res.json();

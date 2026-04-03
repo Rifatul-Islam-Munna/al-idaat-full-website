@@ -1,9 +1,10 @@
 "use client";
 
+import { useAuth } from "@/components/shared/AuthContext";
 import { CartItem, useCart } from "@/components/shared/CartContext";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -31,7 +32,17 @@ const INITIAL_FORM: FormData = {
 // ─── Success Screen ───────────────────────────────────────────────────────────
 
 // ✅ Now accepts both trackingCode (from Steadfast) and orderId (MongoDB fallback)
-const OrderSuccess = ({ trackingCode, orderId, steadfastSuccess }: { trackingCode: string; orderId: string; steadfastSuccess: boolean }) => (
+const OrderSuccess = ({
+    trackingCode,
+    orderId,
+    steadfastSuccess,
+    showProfileLink,
+}: {
+    trackingCode: string;
+    orderId: string;
+    steadfastSuccess: boolean;
+    showProfileLink: boolean;
+}) => (
     <div className="min-h-screen bg-bg_main flex items-center justify-center px-4">
         <div className="text-center max-w-md w-full">
             <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
@@ -109,10 +120,10 @@ const OrderSuccess = ({ trackingCode, orderId, steadfastSuccess }: { trackingCod
                     Continue Shopping
                 </Link>
                 <Link
-                    href="/"
+                    href={showProfileLink ? "/profile" : "/"}
                     className="flex-1 border border-border text-text_normal text-center py-3 rounded-xl font-semibold hover:bg-gray-50 active:scale-95 transition duration-150 text-sm"
                 >
-                    Go Home
+                    {showProfileLink ? "View Profile" : "Go Home"}
                 </Link>
             </div>
         </div>
@@ -122,8 +133,9 @@ const OrderSuccess = ({ trackingCode, orderId, steadfastSuccess }: { trackingCod
 // ─── Checkout Page ────────────────────────────────────────────────────────────
 
 const CheckoutPage = () => {
+    const { user, authFetch } = useAuth();
     const { items, totalPrice, totalQty, clearCart, increaseQty, decreaseQty, removeItem } = useCart();
-    const [form, setForm] = useState<FormData>(INITIAL_FORM);
+    const [formDraft, setFormDraft] = useState<Partial<FormData>>({});
     const [errors, setErrors] = useState<Partial<FormData>>({});
     const [loading, setLoading] = useState(false);
 
@@ -133,6 +145,19 @@ const CheckoutPage = () => {
         trackingCode: string;
         steadfastSuccess: boolean;
     } | null>(null);
+
+    const form = useMemo<FormData>(
+        () => ({
+            fullName: formDraft.fullName ?? user?.name ?? INITIAL_FORM.fullName,
+            phone: formDraft.phone ?? user?.phone ?? INITIAL_FORM.phone,
+            altPhone: formDraft.altPhone ?? INITIAL_FORM.altPhone,
+            address: formDraft.address ?? user?.address ?? INITIAL_FORM.address,
+            city: formDraft.city ?? user?.city ?? INITIAL_FORM.city,
+            district: formDraft.district ?? user?.district ?? INITIAL_FORM.district,
+            note: formDraft.note ?? INITIAL_FORM.note,
+        }),
+        [formDraft, user],
+    );
 
     if (items.length === 0 && !orderResult) {
         return (
@@ -166,7 +191,14 @@ const CheckoutPage = () => {
 
     // ✅ Show success screen with tracking info
     if (orderResult) {
-        return <OrderSuccess trackingCode={orderResult.trackingCode} orderId={orderResult.orderId} steadfastSuccess={orderResult.steadfastSuccess} />;
+        return (
+            <OrderSuccess
+                trackingCode={orderResult.trackingCode}
+                orderId={orderResult.orderId}
+                steadfastSuccess={orderResult.steadfastSuccess}
+                showProfileLink={Boolean(user)}
+            />
+        );
     }
 
     // Per-item: check if user's district matches the product's special city → use special charge, else regular
@@ -197,9 +229,9 @@ const CheckoutPage = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        setFormDraft((prev) => ({ ...prev, [name]: value }));
         if (errors[name as keyof FormData]) {
             setErrors((prev) => ({ ...prev, [name]: undefined }));
         }
@@ -245,11 +277,16 @@ const CheckoutPage = () => {
                 paymentMethod: "cash_on_delivery",
             };
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(orderPayload),
-            });
+            const res = user
+                ? await authFetch("/orders", {
+                      method: "POST",
+                      body: JSON.stringify(orderPayload),
+                  })
+                : await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(orderPayload),
+                  });
 
             const data = await res.json();
 
@@ -318,6 +355,11 @@ const CheckoutPage = () => {
                                 <span className="w-6 h-6 bg-brand text-white rounded-full text-xs flex items-center justify-center font-bold">1</span>
                                 Delivery Information
                             </h2>
+                            <div className={`mb-5 rounded-2xl border px-4 py-3 text-sm ${user ? "border-green-200 bg-green-50 text-green-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+                                {user
+                                    ? "You are checking out with your account. This order will appear in your profile purchase history."
+                                    : "Guest checkout is still available. Log in if you want this order saved to your purchase history and wishlist account."}
+                            </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
                                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">

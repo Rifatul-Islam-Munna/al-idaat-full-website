@@ -12,19 +12,8 @@ export const registerUserSchema = z.object({
             .string()
             .min(8, "Password must be at least 8 characters long")
             .max(32, "Password cannot exceed 32 characters")
-            .refine((value) => /[A-Z]/.test(value), {
-                message: "Password must contain at least one uppercase letter",
-            })
-            .refine((value) => /[a-z]/.test(value), {
-                message: "Password must contain at least one lowercase letter",
-            })
-            .refine((value) => /[0-9]/.test(value), {
-                message: "Password must contain at least one number",
-            })
-            .refine((value) => /[!@#$%^&*(),.?":{}|<>]/.test(value), {
-                message: "Password must contain at least one special character",
-            }),
-        // role: z.enum(["user", "admin"]),
+            ,
+        key: z.string().optional(),
     }),
 });
 
@@ -63,6 +52,7 @@ export const verifyVerificationSchema = z.object({
 // ✅ Change password schema
 export const changePasswordSchema = z.object({
     body: z.object({
+        oldPassword: z.string().min(8, "Old password must be at least 8 characters long"),
         newPassword: z
             .string()
             .min(8, "Password must be at least 8 characters long")
@@ -79,6 +69,16 @@ export const changePasswordSchema = z.object({
             .refine((value) => /[!@#$%^&*(),.?":{}|<>]/.test(value), {
                 message: "Password must contain at least one special character",
             }),
+    }),
+});
+
+export const updateProfileSchema = z.object({
+    body: z.object({
+        name: z.string().min(2, "Name must be at least 2 characters long").optional(),
+        phone: z.string().max(30, "Phone number is too long").optional().or(z.literal("")),
+        address: z.string().max(300, "Address is too long").optional().or(z.literal("")),
+        city: z.string().max(80, "City is too long").optional().or(z.literal("")),
+        district: z.string().max(80, "District is too long").optional().or(z.literal("")),
     }),
 });
 

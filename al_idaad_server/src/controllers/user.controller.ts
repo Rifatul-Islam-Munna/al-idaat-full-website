@@ -1,29 +1,153 @@
-import { Request, Response } from "express";
-import User from "../models/user.model";
+import { createHmac, timingSafeEqual } from "crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { env } from "../config/env";
+import { Request, Response } from "express";
 import { z } from "zod";
+import User from "../models/user.model";
+import Product from "../models/product.model";
+import Session from "../models/session.model";
+import { env } from "../config/env";
 import { loginUserSchema } from "../schemas/user.schema";
-import { createHmac, timingSafeEqual } from "crypto";
 import { transport } from "../utils/sendMail";
 import { createDeviceId } from "../utils/device";
-import Session from "../models/session.model";
 import formatExpiration from "../utils/formatDate";
 import { createAccessToken, createRefreshToken, RefreshTokenPayload } from "../utils/tokens";
 
-// type RegisterUserInput = z.infer<typeof registerUserSchema>["body"];
 type LoginUserInput = z.infer<typeof loginUserSchema>["body"];
+
+const SESSION_MAX_AGE_MS = 10 * 24 * 60 * 60 * 1000;
+
+const getSessionExpiryDate = () => new Date(Date.now() + SESSION_MAX_AGE_MS);
+
+const getRefreshCookieOptions = () => ({
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: (env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_MS,
+});
 
 export const getUsers = async (req: Request, res: Response) => {
     const data = await User.find();
+
     res.status(200).json({
         success: true,
-        data: data,
+        data,
     });
 };
 
-// register controller
+export const getCurrentUser = async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized",
+        });
+    }
+
+    const user = await User.findById(req.user.id).populate("wishlist");
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        data: user,
+    });
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized",
+        });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    const normalize = (value?: string) => value?.trim() || undefined;
+
+    if (typeof req.body.name === "string") user.name = req.body.name.trim();
+    if (req.body.phone !== undefined) user.phone = normalize(req.body.phone);
+    if (req.body.address !== undefined) user.address = normalize(req.body.address);
+    if (req.body.city !== undefined) user.city = normalize(req.body.city);
+    if (req.body.district !== undefined) user.district = normalize(req.body.district);
+
+    await user.save();
+
+    const updatedUser = await User.findById(req.user.id).populate("wishlist");
+
+    res.status(200).json({
+        success: true,
+        data: updatedUser,
+        message: "Profile updated successfully",
+    });
+};
+
+export const toggleWishlist = async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized",
+        });
+    }
+
+    const { productId } = req.params;
+
+    if (!productId) {
+        return res.status(400).json({
+            success: false,
+            message: "Product ID is required",
+        });
+    }
+
+    const [user, product] = await Promise.all([User.findById(req.user.id), Product.findById(productId)]);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    if (!product) {
+        return res.status(404).json({
+            success: false,
+            message: "Product not found",
+        });
+    }
+
+    const alreadyInWishlist = user.wishlist.some((item) => item.toString() === productId);
+
+    if (alreadyInWishlist) {
+        user.wishlist = user.wishlist.filter((item) => item.toString() !== productId);
+    } else {
+        user.wishlist.push(product._id);
+    }
+
+    await user.save();
+
+    const updatedUser = await User.findById(req.user.id).populate("wishlist");
+
+    res.status(200).json({
+        success: true,
+        inWishlist: !alreadyInWishlist,
+        data: updatedUser,
+        message: alreadyInWishlist ? "Removed from wishlist" : "Added to wishlist",
+    });
+};
+
 export const registerUser = async (req: Request, res: Response) => {
     const { name, email, password, key } = req.body;
 
@@ -36,24 +160,27 @@ export const registerUser = async (req: Request, res: Response) => {
         });
     }
 
-    //make admin or user
-    let role = "admin";
-    if (key !== env.ADMIN_KEY) {
-        return res.status(401).json({
-            success: false,
-            message: "Error key",
-        });
+    let role: "admin" | "user" = "user";
+
+    if (key) {
+        if (key !== env.ADMIN_KEY) {
+            return res.status(401).json({
+                success: false,
+                message: "Error key",
+            });
+        }
+
+        role = "admin";
     }
 
-    // hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create a new user
     await User.create({
         name,
         email,
         role,
         password: hashedPassword,
+        verified: role === "admin",
     });
 
     res.status(201).json({
@@ -62,31 +189,27 @@ export const registerUser = async (req: Request, res: Response) => {
     });
 };
 
-// login controller
 export const loginUser = async (req: Request<{}, {}, LoginUserInput>, res: Response) => {
     const { email, password } = req.body;
 
-    // check if user exists or not
     const existingUser = await User.findOne({ email }).select("+password");
+
     if (!existingUser) {
         return res.status(401).json({
             success: false,
             message: "User does not exists or Invalid email",
         });
     }
-    // check password
+
     const result = await bcrypt.compare(password, existingUser.password);
+
     if (!result) {
         return res.status(401).json({ success: false, message: "Wrong password!" });
     }
 
-    // create device id
     const deviceId = createDeviceId(req);
+    const expiresAtDate = getSessionExpiryDate();
 
-    // refresh token expire date
-    const expiresAtDate = new Date(Date.now() + 7 * 86400000);
-
-    //create session
     const session = await Session.create({
         userId: existingUser._id,
         deviceId,
@@ -96,17 +219,10 @@ export const loginUser = async (req: Request<{}, {}, LoginUserInput>, res: Respo
         expiresAtFormated: formatExpiration(expiresAtDate),
     });
 
-    // generate tokens
     const refreshToken = createRefreshToken(session._id);
     const accessToken = createAccessToken({ _id: existingUser._id, role: existingUser.role as "admin" | "user" });
 
-    // set cookie
-    res.cookie("refreshToken", refreshToken, {
-        httpOnly: true, // Always true for security
-        secure: env.NODE_ENV === "production", // Only HTTPS in production
-        sameSite: env.NODE_ENV === "production" ? "none" : "lax", // Critical fix
-        path: "/",
-    });
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
 
     res.status(200).json({
         success: true,
@@ -115,7 +231,6 @@ export const loginUser = async (req: Request<{}, {}, LoginUserInput>, res: Respo
     });
 };
 
-// refresh controller
 export const refresh = async (req: Request, res: Response) => {
     const token = req.cookies.refreshToken;
 
@@ -139,7 +254,6 @@ export const refresh = async (req: Request, res: Response) => {
 
     const oldSession = await Session.findById(payload.sid);
 
-    // 🔐 TOKEN REUSE DETECTION
     if (!oldSession || !oldSession.valid) {
         if (oldSession) {
             await Session.updateMany({ userId: oldSession.userId }, { valid: false });
@@ -151,20 +265,20 @@ export const refresh = async (req: Request, res: Response) => {
         });
     }
 
-    // 🔄 ROTATE SESSION
     oldSession.valid = false;
     await oldSession.save();
+
+    const expiresAtDate = getSessionExpiryDate();
 
     const newSession = await Session.create({
         userId: oldSession.userId,
         deviceId: oldSession.deviceId,
         ip: req.ip || "unknown",
         userAgent: req.headers["user-agent"] || "unknown",
-        expiresAt: new Date(Date.now() + 7 * 86400000),
-        expiresAtFormated: formatExpiration(new Date(Date.now() + 7 * 86400000)),
+        expiresAt: expiresAtDate,
+        expiresAtFormated: formatExpiration(expiresAtDate),
     });
 
-    // ✅ GET USER ROLE FROM DB
     const user = await User.findById(oldSession.userId).select("role");
 
     if (!user) {
@@ -174,21 +288,13 @@ export const refresh = async (req: Request, res: Response) => {
         });
     }
 
-    // ✅ CREATE TOKENS
     const newRefresh = createRefreshToken(newSession._id);
-
     const accessToken = createAccessToken({
         _id: user._id,
         role: user.role as "admin" | "user",
     });
 
-    // ✅ SET COOKIE
-    res.cookie("refreshToken", newRefresh, {
-        httpOnly: true,
-        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-        secure: env.NODE_ENV === "production",
-        path: "/",
-    });
+    res.cookie("refreshToken", newRefresh, getRefreshCookieOptions());
 
     return res.status(200).json({
         success: true,
@@ -199,52 +305,41 @@ export const refresh = async (req: Request, res: Response) => {
 export const logOut = async (req: Request, res: Response) => {
     const token = req.cookies.refreshToken;
 
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: "No refresh token found",
-        });
+    if (token) {
+        try {
+            const payload = jwt.verify(token, env.REFRESH_SECRET) as RefreshTokenPayload;
+
+            await Session.findByIdAndUpdate(payload.sid, {
+                valid: false,
+            });
+        } catch {
+            // Ignore invalid tokens during logout and still clear the cookie.
+        }
     }
 
-    try {
-        const payload = jwt.verify(token, env.REFRESH_SECRET) as RefreshTokenPayload;
+    res.clearCookie("refreshToken", getRefreshCookieOptions());
 
-        await Session.findByIdAndUpdate(payload.sid, {
-            valid: false,
-        });
-
-        // Clear cookie with same options as when it was set
-        res.clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: env.NODE_ENV === "production",
-            sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-            path: "/",
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "Logged out successfully",
-        });
-    } catch (error) {
-        return res.status(403).json({
-            success: false,
-            message: "Invalid refresh token",
-        });
-    }
+    return res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+    });
 };
 
 export const sendVerificationCode = async (req: Request, res: Response) => {
     const { email } = req.body;
     const existingUser = await User.findOne({ email });
+
     if (!existingUser) {
         return res.status(404).json({ success: false, message: "User does not exists!" });
     }
+
     if (existingUser.verified) {
         return res.status(400).json({ success: false, message: "You are already verified!" });
     }
+
     const codeValue = Math.floor(100000 + Math.random() * 900000).toString();
 
-    let info = await transport.sendMail({
+    const info = await transport.sendMail({
         from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
         to: existingUser.email,
         subject: "verification code",
@@ -275,6 +370,7 @@ export const sendVerificationCode = async (req: Request, res: Response) => {
         await existingUser.save();
         return res.status(200).json({ success: true, message: "Code sent!" });
     }
+
     res.status(400).json({ success: false, message: "Code sent failed!" });
 };
 
@@ -299,16 +395,14 @@ export const verifyVerificationCode = async (req: Request, res: Response) => {
         });
     }
 
-    // ⏰ Expiry check (10 minutes)
     const isExpired = Date.now() - existingUser.verificationCodeValidation > 10 * 60 * 1000;
+
     if (isExpired) {
         return res.status(400).json({ success: false, message: "Verification code expired!" });
     }
 
-    // 🔐 Hash the provided code
     const hashedCodeValue = createHmac("sha256", env.HMAC_VERIFICATION_CODE_SECRET).update(codeValue).digest("hex");
 
-    // ✅ Safer comparison
     const providedBuffer = Buffer.from(hashedCodeValue, "hex");
     const storedBuffer = Buffer.from(existingUser.verificationCode, "hex");
 
@@ -330,13 +424,14 @@ export const verifyVerificationCode = async (req: Request, res: Response) => {
 export const sendForgotPasswordCode = async (req: Request, res: Response) => {
     const { email } = req.body;
     const existingUser = await User.findOne({ email });
+
     if (!existingUser) {
         return res.status(404).json({ success: false, message: "User does not exists!" });
     }
 
     const codeValue = Math.floor(100000 + Math.random() * 900000).toString();
 
-    let info = await transport.sendMail({
+    const info = await transport.sendMail({
         from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
         to: existingUser.email,
         subject: "Forgot Password Verification code",
@@ -367,8 +462,10 @@ export const sendForgotPasswordCode = async (req: Request, res: Response) => {
         await existingUser.save();
         return res.status(200).json({ success: true, message: "Code sent!" });
     }
+
     res.status(400).json({ success: false, message: "Code sent failed!" });
 };
+
 export const verifyForgotPasswordCodeAndUpdatePassword = async (req: Request, res: Response) => {
     const { email, providedCode, newPassword } = req.body;
     const codeValue = providedCode.toString();
@@ -384,9 +481,11 @@ export const verifyForgotPasswordCodeAndUpdatePassword = async (req: Request, re
             message: "something is wrong with the code!",
         });
     }
+
     if (Date.now() - existingUser.forgotPasswordCodeValidation > 2 * 60 * 1000) {
         return res.status(400).json({ success: false, message: "code has been expired!" });
     }
+
     const hashedCodeValue = createHmac("sha256", env.HMAC_VERIFICATION_CODE_SECRET).update(codeValue).digest("hex");
 
     if (hashedCodeValue === existingUser.forgotPasswordCode) {
@@ -397,6 +496,7 @@ export const verifyForgotPasswordCodeAndUpdatePassword = async (req: Request, re
         await existingUser.save();
         return res.status(200).json({ success: true, message: "Password updated!!" });
     }
+
     return res.status(400).json({ success: false, message: "unexpected occured!!" });
 };
 
@@ -406,28 +506,25 @@ export const changePassword = async (req: Request, res: Response) => {
 
     const data = await User.findById(id);
 
-    // ✅ Check if user is verified
-    if (!data?.verified as boolean) {
+    if (!(data?.verified as boolean)) {
         return res.status(401).json({
             success: false,
             message: "You are not a verified user!",
         });
     }
 
-    // ✅ Find user in DB
     const existingUser = await User.findById(id).select("+password");
 
     if (!existingUser) {
         return res.status(404).json({ success: false, message: "User does not exist!" });
     }
 
-    // ✅ Validate old password
     const isMatch = await bcrypt.compare(oldPassword, existingUser.password);
+
     if (!isMatch) {
         return res.status(401).json({ success: false, message: "Invalid credentials!" });
     }
 
-    // ✅ Hash new password and update
     existingUser.password = await bcrypt.hash(newPassword, 10);
     await existingUser.save();
 

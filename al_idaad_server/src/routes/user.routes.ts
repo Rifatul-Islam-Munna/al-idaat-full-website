@@ -5,6 +5,7 @@ import {
     loginUserSchema,
     registerUserSchema,
     changePasswordSchema,
+    updateProfileSchema,
     verifyEmailSchema,
     verifyVerificationSchema,
 } from "../schemas/user.schema";
@@ -18,16 +19,22 @@ import {
     sendForgotPasswordCode,
     verifyForgotPasswordCodeAndUpdatePassword,
     getUsers,
+    getCurrentUser,
     refresh,
+    toggleWishlist,
+    updateProfile,
 } from "../controllers/user.controller";
 import { identifier } from "../middlewares/indentifier.middleware";
 
 const router = Router();
 
 router.get("/user", identifier, getUsers);
+router.get("/me", identifier, getCurrentUser);
 router.post("/register", validateRequest(registerUserSchema), registerUser);
 router.post("/login", validateRequest(loginUserSchema), loginUser);
 router.post("/logout", logOut);
+router.patch("/profile", identifier, validateRequest(updateProfileSchema), updateProfile);
+router.post("/wishlist/:productId", identifier, toggleWishlist);
 router.patch("/send-verification-code", identifier, validateRequest(verifyEmailSchema), sendVerificationCode);
 router.patch("/verify-verification-code", identifier, validateRequest(verifyVerificationSchema), verifyVerificationCode);
 router.patch("/change-password/:id", identifier, validateRequest(changePasswordSchema), changePassword);

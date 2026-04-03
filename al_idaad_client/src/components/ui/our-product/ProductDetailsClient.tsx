@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { ProductType, ProductVariant, AttarSize } from "@/utils/types";
 import { useCart } from "@/components/shared/CartContext";
+import WishlistButton from "@/components/shared/WishlistButton";
 import { buildCartKey } from "@/utils/helper";
 import ReturnPolicy from "./ReturnPolicy";
 
@@ -657,6 +658,12 @@ const ProductDetailsClient = ({ product }: { product: ProductType }) => {
               </Link>
             )}
           </div>
+
+          <WishlistButton
+            productId={product._id}
+            label="Save to Wishlist"
+            className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-text_normal hover:border-brand hover:text-brand transition-all duration-150"
+          />
 
           {/* Selection prompt */}
           {inStock &&
