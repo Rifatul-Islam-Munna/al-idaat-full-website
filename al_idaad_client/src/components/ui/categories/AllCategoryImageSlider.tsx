@@ -3,71 +3,82 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Autoplay } from "swiper/modules";
-
 import { CategoryImageType, CategoryType } from "@/utils/types";
 import Link from "next/link";
-import { getLowestSubCategories } from "@/utils/helper";
 import Image from "next/image";
+import { HiArrowRight } from "react-icons/hi2";
 
 type PropsType = {
-    categories: CategoryType[];
-    categoryImages: CategoryImageType[];
+  categories: CategoryType[];
+  categoryImages: CategoryImageType[];
 };
 
 const AllCategoryImageSlider = ({ categories, categoryImages }: PropsType) => {
-    const categoryList = getLowestSubCategories(categories);
-    const categoryIdList = categoryList.map((ele) => ele._id);
-    const categoryImageList = categoryImages.filter((ele) => categoryIdList.includes(ele.categoryId));
+  const categoryMap = new Map(categories.map((item) => [item._id, item]));
 
-    return (
-        <div className="relative w-full">
-            {/* Fade edges */}
-            {/* <div className="pointer-events-none absolute left-0 top-0 h-full w-16 z-10 bg-linear-to-r from-bg_main to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 h-full w-16 z-10 bg-linear-to-l from-bg_main to-transparent" /> */}
+  const categoryImageList = categoryImages.filter((item) =>
+    categoryMap.has(item.categoryId),
+  );
 
-            <Swiper
-                slidesPerView={"auto"}
-                spaceBetween={12}
-                centeredSlides={true}
-                loop={true}
-                autoplay={{
-                    delay: 2500,
-                    disableOnInteraction: false,
-                }}
-                modules={[Autoplay]}
-                className="mySwiper"
-            >
-                {categoryImageList.map((ele) => (
-                    <SwiperSlide key={ele._id} className="w-auto!">
-                        <Link href={`/all-products?category=${ele.categoryId}`}>
-                            <div className="group w-36 md:w-44 border border-border bg-bg_main hover:border-brand hover:shadow-md transition-all duration-300 rounded-xl overflow-hidden cursor-pointer select-none">
-                                {/* Square image area */}
-                                <div className="relative w-full aspect-square overflow-hidden bg-bg_secondary">
-                                    <Image src={ele.url} alt={ele.categoryName} fill className="object-cover aspect-square" />
-                                </div>
+  return (
+    <div className="relative w-full">
+      <Swiper
+        slidesPerView="auto"
+        spaceBetween={16}
+        loop
+        autoplay={{
+          delay: 2600,
+          disableOnInteraction: false,
+        }}
+        modules={[Autoplay]}
+        className="mySwiper"
+      >
+        {categoryImageList.map((item) => {
+          const matchedCategory = categoryMap.get(item.categoryId);
 
-                                {/* Text content */}
-                                <div className="px-3 py-2.5 flex flex-col gap-0.5">
-                                    <span className="text-[10px] font-medium text-text_light uppercase tracking-wider font-poppins truncate">
-                                        {ele.categoryParentName}
-                                    </span>
+          return (
+            <SwiperSlide key={item._id} className="!w-auto">
+              <Link href={`/all-products?category=${item.categoryId}`}>
+                <div className="group w-[148px] md:w-[180px]">
+                  <div className="bg-transparent">
+                    <div className="relative aspect-square w-full overflow-hidden bg-[#f7f7f7]">
+                      <Image
+                        src={item.url}
+                        alt={
+                          matchedCategory?.name ||
+                          item.categoryName ||
+                          "Category"
+                        }
+                        width={500}
+                        height={500}
+                        className="h-full w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    </div>
 
-                                    <div className="flex items-center justify-between gap-1">
-                                        <span className="text-sm font-semibold text-text_dark group-hover:text-brand transition-colors duration-300 font-poppins leading-tight truncate">
-                                            {ele.categoryName}
-                                        </span>
-                                        <span className="text-xs text-text_light group-hover:text-brand shrink-0 transition-colors duration-300">
-                                            →
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    </SwiperSlide>
-                ))}
-            </Swiper>
-        </div>
-    );
+                    <div className="pt-3">
+                      <p className="mb-1 line-clamp-1 text-[10px] font-medium uppercase tracking-[0.16em] text-black/40">
+                        {item.categoryParentName || "Category"}
+                      </p>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="line-clamp-1 text-sm font-medium text-black md:text-[15px]">
+                          {matchedCategory?.name || item.categoryName}
+                        </h3>
+
+                        <span className="text-black/50 transition-all duration-300 group-hover:translate-x-1 group-hover:text-black">
+                          <HiArrowRight size={16} />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
+    </div>
+  );
 };
 
 export default AllCategoryImageSlider;

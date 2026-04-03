@@ -7,7 +7,7 @@ const OurProduct = async () => {
   const productData = await getProducts();
 
   return (
-    <section className="py-10">
+    <section className=" py-3 lg:py-5">
       {/* Header */}
       <div className="text-center mb-8">
         <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-3">

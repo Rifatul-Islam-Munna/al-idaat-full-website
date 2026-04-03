@@ -6,6 +6,7 @@ import Footer from "@/components/shared/Footer";
 import { Toaster } from "react-hot-toast";
 import { CartProvider } from "@/components/shared/CartContext";
 import WhatsApp from "@/components/shared/WhatsApp";
+import { getCategories } from "@/utils/fetchData";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -63,11 +64,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const categories = await getCategories();
   return (
     <html lang="en">
       <body
@@ -75,7 +77,7 @@ export default function RootLayout({
       >
         <CartProvider>
           <div className="max-w-480 mx-auto pt-18 md:pt-25">
-            <Navbar />
+            <Navbar categories={categories} />
             {children}
             <Toaster position="bottom-right" reverseOrder={false} />
             <Footer />

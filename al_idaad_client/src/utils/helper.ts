@@ -85,6 +85,11 @@ export const buildCartKey = (product: ProductType, variant?: ProductVariant, att
     return product._id;
 };
 
+export const getProductIdentifier = (product: Pick<ProductType, "_id" | "slug">): string => product.slug || product._id;
+
+export const getProductDetailsPath = (product: Pick<ProductType, "_id" | "slug">): string =>
+    `/all-products/details/${getProductIdentifier(product)}`;
+
 //function to calculate reduced price--------------------
 export const calculateReducedPrice = (price: string | number, discount: string | number): number => {
     const num_price = Number(price);

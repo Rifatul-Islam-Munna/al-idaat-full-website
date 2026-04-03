@@ -109,6 +109,7 @@ export interface AttarSize {
 export interface ProductType {
     _id: string;
     name: string;
+    slug?: string;
     shortDescription?: string;
     description: string;
     brand?: string;
@@ -173,6 +174,7 @@ export type OfferType = {
     desktopUrl?: string;
     mobileUrl?: string;
     productId: string;
+    productSlug?: string;
     createdAt: string;
     updatedAt: string;
 };

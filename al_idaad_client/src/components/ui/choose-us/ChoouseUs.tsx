@@ -119,7 +119,7 @@ const badges = [
 
 const ChooseUs = () => {
   return (
-    <section className="py-14 px-4 max-w-5xl mx-auto">
+    <section className=" py-3 md:py-5 px-4 max-w-5xl mx-auto">
       {/* ── Header ── */}
       <div className="text-center mb-12">
         <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-4">

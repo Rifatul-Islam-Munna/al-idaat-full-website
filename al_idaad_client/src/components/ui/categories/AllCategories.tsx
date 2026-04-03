@@ -5,11 +5,18 @@ const AllCategories = async () => {
   const categoryData = await getCategories();
   const categoryImageData = await getCategoryImage();
 
+  /*   console.log(
+    "categoryImageData",
+    categoryImageData,
+    "categoryData",
+    categoryData,
+  ); */
+
   return (
-    <section className="py-10">
+    <section className=" py-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-3">
+        <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full ">
           Our Collection
         </span>
         <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 leading-tight">

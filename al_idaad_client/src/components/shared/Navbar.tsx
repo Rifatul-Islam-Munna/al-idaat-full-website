@@ -7,6 +7,11 @@ import { useEffect, useState } from "react";
 import { CartItem, useCart } from "./CartContext";
 import SearchBox from "./SearchBox";
 import { FiMenu, FiX, FiSearch, FiShoppingBag } from "react-icons/fi";
+import { CategoryType } from "@/utils/types";
+
+type NavbarProps = {
+  categories: CategoryType[];
+};
 
 const getItemSubtitle = (item: CartItem): string | null => {
   if (item.selectedVariant) {
@@ -21,12 +26,13 @@ const getItemSubtitle = (item: CartItem): string | null => {
   return null;
 };
 
-const Navbar = () => {
+const Navbar = ({ categories }: NavbarProps) => {
   const pathname = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   const { items, totalQty, totalPrice, increaseQty, decreaseQty, removeItem } =
@@ -34,7 +40,6 @@ const Navbar = () => {
 
   const links = [
     { href: "/", label: "Home" },
-    { href: "/all-products", label: "Products" },
     { href: "/blog", label: "Blog" },
     { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
@@ -46,19 +51,22 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
+  useEffect(() => {
     setIsSearchOpen(false);
     setIsMenuOpen(false);
-  }
+    setIsCategoryOpen(false);
+  }, [pathname]);
 
   return (
     <>
       {/* ── Main Nav ── */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm transition-shadow duration-300
-          ${scrolled ? "shadow-[0_1px_14px_rgba(0,0,0,0.06)]" : "border-b border-gray-100"}`}
+          ${
+            scrolled
+              ? "shadow-[0_1px_14px_rgba(0,0,0,0.06)]"
+              : "border-b border-gray-100"
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
           {/* Logo */}
@@ -74,6 +82,7 @@ const Navbar = () => {
             {links.map(({ href, label }) => {
               const isActive =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
+
               return (
                 <Link
                   key={href}
@@ -90,6 +99,58 @@ const Navbar = () => {
                 </Link>
               );
             })}
+
+            {/* Desktop Category Dropdown */}
+            <div className="relative group">
+              <button
+                type="button"
+                className={`relative px-3 py-2 rounded-full text-sm font-medium tracking-wide
+                  transition-colors duration-200 flex items-center gap-2
+                  ${
+                    pathname.startsWith("/all-products")
+                      ? "text-brand bg-brand/8"
+                      : "text-text_normal hover:text-text_dark hover:bg-gray-50"
+                  }`}
+              >
+                Category
+                <span className="text-[10px] leading-none mt-[1px]">▼</span>
+              </button>
+
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-full pt-3
+                  opacity-0 invisible translate-y-1
+                  group-hover:opacity-100 group-hover:visible group-hover:translate-y-0
+                  transition-all duration-200 z-50"
+              >
+                <div className="w-[420px] rounded-sm border border-gray-100 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)] p-4">
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+                    {categories.map((category) => (
+                      <Link
+                        key={category._id}
+                        href={`/all-products?category=${category._id}`}
+                        className="text-sm text-text_normal hover:text-brand transition-colors duration-150 line-clamp-1"
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Optional all products direct link */}
+            <Link
+              href="/all-products"
+              className={`relative px-3 py-2 rounded-full text-sm font-medium tracking-wide
+                transition-colors duration-200
+                ${
+                  pathname === "/all-products"
+                    ? "text-brand bg-brand/8"
+                    : "text-text_normal hover:text-text_dark hover:bg-gray-50"
+                }`}
+            >
+              Products
+            </Link>
           </div>
 
           {/* Actions */}
@@ -138,6 +199,7 @@ const Navbar = () => {
         onClick={() => {
           setIsMenuOpen(false);
           setIsCartOpen(false);
+          setIsCategoryOpen(false);
         }}
         className={`fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40 transition-opacity duration-300
           ${
@@ -161,6 +223,7 @@ const Navbar = () => {
           <button
             onClick={() => setIsMenuOpen(false)}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150"
+            aria-label="Close menu"
           >
             <FiX size={20} className="text-text_normal" />
           </button>
@@ -171,6 +234,7 @@ const Navbar = () => {
           {links.map(({ href, label }) => {
             const isActive =
               href === "/" ? pathname === "/" : pathname.startsWith(href);
+
             return (
               <Link
                 key={href}
@@ -193,10 +257,65 @@ const Navbar = () => {
               </Link>
             );
           })}
+
+          {/* Mobile Category Dropdown */}
+          <div className="mt-1 rounded-xl bg-gray-50 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsCategoryOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-text_dark"
+            >
+              <span>Category</span>
+              <span
+                className={`text-xs transition-transform duration-200 ${
+                  isCategoryOpen ? "rotate-180" : ""
+                }`}
+              >
+                ▼
+              </span>
+            </button>
+
+            <div
+              className={`grid transition-all duration-300 ${
+                isCategoryOpen
+                  ? "grid-rows-[1fr] opacity-100"
+                  : "grid-rows-[0fr] opacity-0"
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div className="px-4 pb-4 pt-1 grid grid-cols-2 gap-2">
+                  {categories.map((category) => (
+                    <Link
+                      key={category._id}
+                      href={`/all-products?category=${category._id}`}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsCategoryOpen(false);
+                      }}
+                      className="text-xs text-text_normal hover:text-brand bg-white border border-gray-100 rounded-full px-3 py-2 text-center transition-colors duration-150"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+
+                  <Link
+                    href="/all-products"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsCategoryOpen(false);
+                    }}
+                    className="text-xs text-white bg-brand rounded-full px-3 py-2 text-center transition-opacity duration-150 hover:opacity-90 col-span-2"
+                  >
+                    View All Products
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </nav>
       </div>
 
-      {/* ── Cart Drawer (unchanged) ── */}
+      {/* ── Cart Drawer ── */}
       <div
         className={`fixed top-0 right-0 h-full w-80 bg-white z-50 shadow-2xl
           transform transition-transform duration-300 ease-in-out
@@ -214,6 +333,7 @@ const Navbar = () => {
           <button
             onClick={() => setIsCartOpen(false)}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150"
+            aria-label="Close cart"
           >
             <FiX size={20} className="text-text_normal" />
           </button>
@@ -232,6 +352,7 @@ const Navbar = () => {
               <div className="space-y-3">
                 {items.map((item) => {
                   const subtitle = getItemSubtitle(item);
+
                   return (
                     <div
                       key={item.cartKey}
@@ -259,6 +380,7 @@ const Navbar = () => {
                               </span>
                             )}
                           </div>
+
                           <button
                             onClick={() => removeItem(item.cartKey)}
                             className="text-gray-300 hover:text-red-400 transition-colors shrink-0 mt-0.5"
@@ -267,23 +389,29 @@ const Navbar = () => {
                             <FiX size={15} />
                           </button>
                         </div>
+
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-brand font-bold text-sm">
                             ৳ {(item.price * item.quantity).toLocaleString()}
                           </span>
+
                           <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-1 py-0.5">
                             <button
                               onClick={() => decreaseQty(item.cartKey)}
                               className="w-6 h-6 flex items-center justify-center text-text_normal hover:text-brand font-medium transition-colors"
+                              aria-label="Decrease quantity"
                             >
                               −
                             </button>
+
                             <span className="text-sm font-semibold w-5 text-center text-text_dark">
                               {item.quantity}
                             </span>
+
                             <button
                               onClick={() => increaseQty(item.cartKey)}
                               className="w-6 h-6 flex items-center justify-center text-text_normal hover:text-brand font-medium transition-colors"
+                              aria-label="Increase quantity"
                             >
                               +
                             </button>
@@ -307,6 +435,7 @@ const Navbar = () => {
                   ৳ {totalPrice.toLocaleString()}
                 </span>
               </div>
+
               <Link
                 href="/checkout"
                 onClick={() => setIsCartOpen(false)}

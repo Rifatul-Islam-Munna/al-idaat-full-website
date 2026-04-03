@@ -113,13 +113,13 @@ export const getProducts = async (): Promise<ProductType[]> => {
     return result.data;
 };
 // get single product
-export const getSingleProduct = async (id: string): Promise<ProductType> => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
+export const getSingleProduct = async (identifier: string): Promise<ProductType> => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${encodeURIComponent(identifier)}`, {
         next: { revalidate: 300 },
     });
 
-    if (!res) {
-        throw new Error("Failed to fetch blog");
+    if (!res.ok) {
+        throw new Error("Failed to fetch product");
     }
 
     const data: GetSingleProductResponseType = await res.json();

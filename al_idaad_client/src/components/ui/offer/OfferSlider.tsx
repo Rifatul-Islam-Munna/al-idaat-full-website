@@ -38,6 +38,7 @@ const OfferSlider = ({ offerBanner }: { offerBanner: OfferType[] }) => {
                 {offerBanner.map((ele) => {
                     const desktopUrl = ele.desktopUrl || ele.url;
                     const mobileUrl = ele.mobileUrl || desktopUrl;
+                    const productIdentifier = ele.productSlug || ele.productId;
 
                     if (!desktopUrl) {
                         return null;
@@ -47,7 +48,7 @@ const OfferSlider = ({ offerBanner }: { offerBanner: OfferType[] }) => {
                         <SwiperSlide key={ele._id}>
                             {/* Image */}
                             <div className="flex justify-center relative w-full aspect-[4/5] md:aspect-[5/2]">
-                                <Link href={`/all-products/details/${ele.productId}`} className="relative block h-full w-full">
+                                <Link href={`/all-products/details/${productIdentifier}`} className="relative block h-full w-full">
                                     <Image
                                         src={mobileUrl!}
                                         alt="al idaad mobile offer product"

@@ -6,7 +6,7 @@ const FeaturedProduct = async () => {
   const featuredProduct = productData.filter((ele) => ele.isFeatured);
 
   return (
-    <section className="py-10">
+    <section className="py-2">
       {/* Header */}
       <div className="text-center mb-8">
         <span className="inline-block text-xs font-semibold tracking-[0.18em] uppercase text-brand bg-brand/5 px-4 py-1.5 rounded-full mb-3">

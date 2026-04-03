@@ -1,3 +1,4 @@
+import CustomerReviews from "@/components/shared/CustomerReviews";
 import Banner from "@/components/ui/banner/Banner";
 import BestSoldProduct from "@/components/ui/best-selling/BestSoldProduct";
 import Blog from "@/components/ui/blog/Blog";
@@ -9,24 +10,25 @@ import OurProduct from "@/components/ui/our-product/OurProduct";
 // import Link from "next/link";
 
 const Homepage = () => {
-    return (
-        <div>
-            <div className="relative">
-                <Banner></Banner>
-            </div>
-            <div className="space-y-12 lg:space-y-20 py-20 px-4 max-w-7xl mx-auto">
-                <div className="-mt-4 lg:-mt-8 mb-12">
-                    <AllCategories></AllCategories>
-                </div>
-                <FeaturedProduct></FeaturedProduct>
-                <Offer></Offer>
-                <BestSoldProduct></BestSoldProduct>
-                <OurProduct></OurProduct>
-                <ChoouseUs></ChoouseUs>
-                <Blog></Blog>
-            </div>
+  return (
+    <div>
+      <div className="relative">
+        <Banner></Banner>
+      </div>
+      <div className="space-y-2 lg:space-y-5 py-0 lg:py-5 px-4 max-w-7xl mx-auto">
+        <div className="-mt-4 lg:-mt-8 ">
+          <AllCategories></AllCategories>
         </div>
-    );
+        <FeaturedProduct></FeaturedProduct>
+        <Offer></Offer>
+        <BestSoldProduct></BestSoldProduct>
+        <OurProduct></OurProduct>
+        <CustomerReviews />
+        <ChoouseUs></ChoouseUs>
+        <Blog></Blog>
+      </div>
+    </div>
+  );
 };
 
 export default Homepage;

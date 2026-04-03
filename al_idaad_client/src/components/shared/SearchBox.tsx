@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ProductType, GetAllProductsResponseType } from "@/utils/types";
 import Image from "next/image";
+import { getProductDetailsPath } from "@/utils/helper";
 
 interface SearchBoxProps {
     isOpen: boolean;
@@ -104,7 +105,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isOpen, onClose }) => {
 
     const handleResultClick = (product: ProductType) => {
         onClose();
-        router.push(`/all-products/details/${product._id}`);
+        router.push(getProductDetailsPath(product));
     };
 
     if (!isOpen) return null;

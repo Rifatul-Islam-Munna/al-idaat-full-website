@@ -3,6 +3,8 @@ import AppError from "../utils/AppError";
 import Upload from "../models/upload.model";
 import { v2 as cloudinary } from "cloudinary";
 import Offer from "../models/offer.model";
+import Product from "../models/product.model";
+import { ensureProductSlugs } from "../utils/productSlug";
 
 // CREATE multiple offer
 export const createOffer = async (req: Request, res: Response) => {
@@ -20,12 +22,22 @@ export const createOffer = async (req: Request, res: Response) => {
 
 // GET all offers
 export const getOffers = async (req: Request, res: Response) => {
-    const offers = await Offer.find();
+    const offers = await Offer.find().lean();
+    const productIds = [...new Set(offers.map((offer) => offer.productId).filter(Boolean))];
+    const relatedProducts = productIds.length ? await Product.find({ _id: { $in: productIds } }) : [];
+
+    await ensureProductSlugs(relatedProducts);
+
+    const productSlugMap = new Map(relatedProducts.map((product) => [String(product._id), product.slug]));
+    const offersWithProductSlugs = offers.map((offer) => ({
+        ...offer,
+        productSlug: productSlugMap.get(String(offer.productId)),
+    }));
 
     res.status(200).json({
         success: true,
-        count: offers.length,
-        data: offers,
+        count: offersWithProductSlugs.length,
+        data: offersWithProductSlugs,
     });
 };
 

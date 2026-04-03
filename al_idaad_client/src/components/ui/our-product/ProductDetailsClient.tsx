@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Swiper as SwiperType } from "swiper";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -11,30 +14,6 @@ import { buildCartKey } from "@/utils/helper";
 import ReturnPolicy from "./ReturnPolicy";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const StarRating = ({ rating }: { rating: number }) => (
-  <div className="flex items-center gap-0.5">
-    {[1, 2, 3, 4, 5].map((star) => (
-      <svg
-        key={star}
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill={star <= Math.round(rating) ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="2"
-        className={
-          star <= Math.round(rating) ? "text-yellow-400" : "text-gray-300"
-        }
-      >
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    ))}
-    <span className="text-xs text-gray-500 ml-1 font-medium">
-      {rating.toFixed(1)}
-    </span>
-  </div>
-);
 
 // ─── Variant Selector ─────────────────────────────────────────────────────────
 
@@ -228,6 +207,12 @@ const ProductDetailsClient = ({ product }: { product: ProductType }) => {
   // ── Image gallery state ───────────────────────────────────────────────────
   const allImages = [thumbnail, ...images.filter((img) => img !== thumbnail)];
   const [activeImage, setActiveImage] = useState(0);
+  const [gallerySwiper, setGallerySwiper] = useState<SwiperType | null>(null);
+
+  const handleSelectImage = (index: number) => {
+    setActiveImage(index);
+    gallerySwiper?.slideTo(index);
+  };
 
   // ── Selection state ───────────────────────────────────────────────────────
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
@@ -346,8 +331,7 @@ const ProductDetailsClient = ({ product }: { product: ProductType }) => {
       {/* ── Main grid ── */}
       <div className="flex flex-col sm:flex-row gap-4 lg:gap-8 xl:gap-14">
         {/* ── LEFT: Image Gallery ── */}
-        <div className="flex gap-4 flex-col md:flex-row">
-          {/* Main image */}
+        <div className="flex flex-col gap-4 md:flex-row">
           <div className="relative">
             <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
               {!inStock && (
@@ -362,27 +346,50 @@ const ProductDetailsClient = ({ product }: { product: ProductType }) => {
               )}
             </div>
 
-            <div className="aspect-2/3 sm:w-[45vw] lg:w-110 xl:w-120 rounded-2xl overflow-hidden bg-gray-100">
-              <Image
-                src={allImages[activeImage]}
-                alt={name}
-                width={600}
-                height={900}
-                className="w-full aspect-2/3"
-                priority
-              />
+            <div className="aspect-2/3 w-full sm:w-[45vw] lg:w-110 xl:w-120 rounded-2xl overflow-hidden bg-gray-100">
+              <Swiper
+                onSwiper={setGallerySwiper}
+                onSlideChange={(swiper) => setActiveImage(swiper.activeIndex)}
+                slidesPerView={1}
+                spaceBetween={12}
+                allowTouchMove={allImages.length > 1}
+                className="h-full cursor-grab active:cursor-grabbing"
+              >
+                {allImages.map((img, i) => (
+                  <SwiperSlide key={`${img}-${i}`}>
+                    <Image
+                      src={img}
+                      alt={`${name} view ${i + 1}`}
+                      width={600}
+                      height={900}
+                      className="w-full aspect-2/3 object-cover"
+                      priority={i === 0}
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
+
+            {allImages.length > 1 && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center md:hidden">
+                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-gray-600 shadow-sm">
+                  {activeImage + 1} / {allImages.length}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Thumbnail strip */}
           {allImages.length > 1 && (
-            <div className="flex gap-2 flex-wrap md:flex-col">
+            <div className="flex gap-2 overflow-x-auto pb-1 md:max-h-[42rem] md:flex-col md:overflow-x-visible md:overflow-y-auto md:pb-0 md:pr-1">
               {allImages.map((img, i) => (
                 <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
+                  key={`${img}-${i}`}
+                  type="button"
+                  onClick={() => handleSelectImage(i)}
                   className={`shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-150 w-14 h-21 sm:w-16 sm:h-24
                                         ${activeImage === i ? "border-brand" : "border-transparent hover:border-gray-300"}`}
+                  aria-label={`Show image ${i + 1}`}
                 >
                   <Image
                     src={img}
