@@ -12,9 +12,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { IconType } from "react-icons"
-import toast from "react-hot-toast"
-import { FiHeart, FiLogOut, FiPackage, FiUser } from "react-icons/fi"
+import type { IconType } from "react-icons";
+import toast from "react-hot-toast";
+import { FiHeart, FiLogOut, FiPackage, FiUser } from "react-icons/fi";
 
 type ProfileUpdatePayload = {
   name?: string;
@@ -41,59 +41,24 @@ type ProfileContextValue = {
 type ProfileSection = {
   href: string;
   label: string;
-  eyebrow: string;
-  title: string;
-  description: string;
   icon: IconType;
 };
 
 const profileSections: ProfileSection[] = [
-  {
-    href: "/profile",
-    label: "Settings",
-    eyebrow: "Account Settings",
-    title: "Keep your checkout details polished and ready.",
-    description:
-      "Update your saved name, delivery information, and contact details so every future order feels faster and cleaner.",
-    icon: FiUser,
-  },
-  {
-    href: "/profile/wishlist",
-    label: "Wishlist",
-    eyebrow: "Saved Pieces",
-    title: "Everything you bookmarked, arranged in one calm gallery.",
-    description:
-      "Come back to your saved products, remove what no longer fits, and jump straight back into the product page when you are ready.",
-    icon: FiHeart,
-  },
-  {
-    href: "/profile/purchase-history",
-    label: "Purchase History",
-    eyebrow: "Order Archive",
-    title: "Track every logged-in purchase from one timeline.",
-    description:
-      "See totals, statuses, tracking codes, and the exact items inside each order without digging through checkout emails.",
-    icon: FiPackage,
-  },
+  { href: "/profile", label: "Settings", icon: FiUser },
+  { href: "/profile/wishlist", label: "Wishlist", icon: FiHeart },
+  { href: "/profile/purchase-history", label: "Orders", icon: FiPackage },
 ];
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 
-const isSectionActive = (pathname: string, href: string) => {
-  if (href === "/profile") {
-    return pathname === href;
-  }
-
-  return pathname.startsWith(href);
-};
+const isSectionActive = (pathname: string, href: string) =>
+  href === "/profile" ? pathname === href : pathname.startsWith(href);
 
 export const useProfileShell = () => {
   const context = useContext(ProfileContext);
-
-  if (!context) {
+  if (!context)
     throw new Error("useProfileShell must be used inside ProfileShell");
-  }
-
   return context;
 };
 
@@ -104,22 +69,17 @@ export default function ProfileShell({ children }: { children: ReactNode }) {
   const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
-
+    if (!user) return;
     let active = true;
 
     authFetch("/orders/my-orders")
       .then(async (res) => {
         if (!active) return;
-
         if (!res.ok) {
           setOrders([]);
           setOrdersLoading(false);
           return;
         }
-
         const data: GetOrdersResponseType = await res.json();
         setOrders(data.data);
         setOrdersLoading(false);
@@ -135,11 +95,6 @@ export default function ProfileShell({ children }: { children: ReactNode }) {
     };
   }, [authFetch, user]);
 
-  const activeSection =
-    profileSections.find((section) => isSectionActive(pathname, section.href)) ??
-    profileSections[0];
-
-  const firstName = user?.name.split(" ")[0] ?? "Friend";
   const completionFields = [
     user?.name,
     user?.phone,
@@ -149,7 +104,7 @@ export default function ProfileShell({ children }: { children: ReactNode }) {
   ];
   const completionScore = user
     ? Math.round(
-        (completionFields.filter((value) => Boolean(value?.trim())).length /
+        (completionFields.filter((v) => Boolean(v?.trim())).length /
           completionFields.length) *
           100,
       )
@@ -157,50 +112,42 @@ export default function ProfileShell({ children }: { children: ReactNode }) {
 
   const contextValue = useMemo<ProfileContextValue | null>(() => {
     if (!user) return null;
-
-    return {
-      user,
-      orders,
-      ordersLoading,
-      updateProfile,
-    };
+    return { user, orders, ordersLoading, updateProfile };
   }, [orders, ordersLoading, updateProfile, user]);
 
+  // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <main className="min-h-screen bg-bg_main px-4 py-12">
-        <div className="mx-auto max-w-6xl rounded-[32px] border border-border bg-white p-10 text-center text-gray-500">
-          Loading your account...
-        </div>
+      <main className="min-h-screen bg-bg_main flex items-center justify-center px-4">
+        <p className="text-sm text-gray-400">Loading your account…</p>
       </main>
     );
   }
 
+  // ── Guest ────────────────────────────────────────────────────────────────
   if (!user || !contextValue) {
     return (
-      <main className="min-h-screen bg-bg_main px-4 py-12">
-        <div className="mx-auto max-w-4xl rounded-[32px] border border-border bg-white p-8 text-center sm:p-12">
-          <span className="inline-flex rounded-full bg-brand/8 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-brand">
-            My Profile
-          </span>
-          <h1 className="mt-5 font-playfair text-3xl font-bold text-text_dark sm:text-5xl">
-            Sign in to view your settings, wishlist, and order history.
+      <main className="min-h-screen bg-bg_main flex items-center justify-center px-4">
+        <div className="w-full max-w-sm rounded-3xl border border-border bg-white p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+            <FiUser size={20} className="text-brand" />
+          </div>
+          <h1 className="font-playfair text-xl font-bold text-text_dark">
+            Sign in to your account
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-gray-500 sm:text-base">
-            Your account keeps your saved details, synced wishlist items, and
-            purchase history ready every time you return.
+          <p className="mt-2 text-sm leading-6 text-gray-400">
+            Access your settings, wishlist, and order history.
           </p>
-
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-3">
             <Link
               href="/login"
-              className="rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+              className="rounded-2xl bg-brand py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
               Login
             </Link>
             <Link
               href="/register"
-              className="rounded-2xl border border-border px-6 py-3 text-sm font-semibold text-text_dark transition hover:bg-gray-50"
+              className="rounded-2xl border border-border py-3 text-sm font-semibold text-text_dark transition hover:bg-gray-50"
             >
               Create Account
             </Link>
@@ -210,177 +157,168 @@ export default function ProfileShell({ children }: { children: ReactNode }) {
     );
   }
 
+  // ── Authenticated ────────────────────────────────────────────────────────
   return (
     <ProfileContext.Provider value={contextValue}>
-      <main className="min-h-screen bg-bg_main px-4 py-8 md:py-12">
-        <div className="mx-auto max-w-6xl space-y-6">
-          <section className="overflow-hidden rounded-[36px] border border-border bg-white">
-            <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="relative overflow-hidden px-7 py-8 sm:px-10 sm:py-10">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(163,122,74,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(0,0,0,0.04),transparent_38%)]" />
-                <div className="relative">
-                  <span className="inline-flex rounded-full bg-brand/8 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-brand">
-                    {activeSection.eyebrow}
-                  </span>
-                  <h1 className="mt-5 max-w-2xl font-playfair text-3xl font-bold leading-tight text-text_dark sm:text-5xl">
-                    {activeSection.title}
-                  </h1>
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-500 sm:text-base">
-                    {activeSection.description}
-                  </p>
-
-                  <div className="mt-8 flex flex-wrap gap-3">
-                    {profileSections.map((section) => {
-                      const active = isSectionActive(pathname, section.href);
-
-                      return (
-                        <Link
-                          key={section.href}
-                          href={section.href}
-                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                            active
-                              ? "border-brand bg-brand text-white"
-                              : "border-border bg-white text-text_dark hover:border-brand hover:text-brand"
-                          }`}
-                        >
-                          <section.icon size={15} />
-                          {section.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
+      <main className="min-h-screen bg-bg_main">
+        {/* ── Mobile header (hidden on lg) ── */}
+        <div className="lg:hidden bg-white border-b border-border px-4 pt-6 pb-0">
+          {/* User row */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+                {user.name.charAt(0).toUpperCase()}
               </div>
-
-              <div className="border-t border-border bg-gray-50 px-7 py-8 sm:px-10 lg:border-l lg:border-t-0">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-xl font-bold text-white">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-text_dark">
-                      {user.name}
-                    </p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                  </div>
-                </div>
-
-                <div className="mt-7 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                  <div className="rounded-2xl border border-border bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                      Wishlist
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-text_dark">
-                      {user.wishlist.length}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                      Orders
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-text_dark">
-                      {ordersLoading ? "..." : orders.length}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                      Profile
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-text_dark">
-                      {completionScore}%
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-7 rounded-[28px] border border-border bg-white p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                        Welcome Back
-                      </p>
-                      <p className="mt-2 font-playfair text-2xl font-bold text-text_dark">
-                        {firstName}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await logout();
-                        toast.success("Logged out successfully");
-                      }}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-text_dark transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
-                    >
-                      <FiLogOut size={16} />
-                      Logout
-                    </button>
-                  </div>
-                  <p className="mt-4 text-sm leading-7 text-gray-500">
-                    Keep your delivery information fresh so the next checkout is
-                    quick, clear, and less repetitive.
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-text_dark">
+                  {user.name}
+                </p>
+                <p className="truncate text-xs text-gray-400">{user.email}</p>
               </div>
             </div>
-          </section>
 
-          <section className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-            <aside className="space-y-6">
-              <div className="rounded-[28px] border border-border bg-white p-4">
-                <p className="px-2 pb-3 text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                  Account Sections
-                </p>
-                <div className="space-y-2">
+            <button
+              type="button"
+              onClick={async () => {
+                await logout();
+                toast.success("Logged out successfully");
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-medium text-gray-500 transition hover:bg-red-50 hover:text-red-500 hover:border-red-200"
+            >
+              <FiLogOut size={13} />
+              Logout
+            </button>
+          </div>
+
+          {/* Stats strip */}
+          <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-2xl overflow-hidden mb-4">
+            {[
+              { label: "Wishlist", value: user.wishlist.length },
+              { label: "Orders", value: ordersLoading ? "…" : orders.length },
+              { label: "Profile", value: `${completionScore}%` },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex flex-col items-center py-2.5">
+                <span className="text-sm font-bold text-text_dark">
+                  {value}
+                </span>
+                <span className="text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Horizontal tab bar — scrollable on tiny screens */}
+          <nav className="flex gap-1 overflow-x-auto scrollbar-none -mx-4 px-4">
+            {profileSections.map((section) => {
+              const active = isSectionActive(pathname, section.href);
+              return (
+                <Link
+                  key={section.href}
+                  href={section.href}
+                  className={`flex shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap ${
+                    active
+                      ? "border-brand text-brand"
+                      : "border-transparent text-gray-400 hover:text-text_dark"
+                  }`}
+                >
+                  <section.icon size={14} />
+                  {section.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* ── Mobile content ── */}
+        <div className="lg:hidden px-4 py-6">{children}</div>
+
+        {/* ── Desktop layout (sidebar + content) ── */}
+        <div className="hidden lg:block px-6 py-12">
+          <div className="mx-auto max-w-5xl flex gap-6 items-start">
+            {/* Sidebar */}
+            <aside className="w-60 shrink-0">
+              <div className="rounded-3xl border border-border bg-white p-5 space-y-5">
+                {/* Identity */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-text_dark">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-gray-400">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 divide-x divide-border rounded-2xl border border-border overflow-hidden">
+                  {[
+                    { label: "Wishlist", value: user.wishlist.length },
+                    {
+                      label: "Orders",
+                      value: ordersLoading ? "…" : orders.length,
+                    },
+                    { label: "Profile", value: `${completionScore}%` },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex flex-col items-center py-3 px-1"
+                    >
+                      <span className="text-sm font-bold text-text_dark">
+                        {value}
+                      </span>
+                      <span className="mt-0.5 text-[9px] uppercase tracking-widest text-gray-400">
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Nav */}
+                <nav className="space-y-1">
                   {profileSections.map((section) => {
                     const active = isSectionActive(pathname, section.href);
-
                     return (
                       <Link
                         key={section.href}
                         href={section.href}
-                        className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                        className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
                           active
                             ? "bg-brand text-white"
-                            : "bg-gray-50 text-text_dark hover:bg-brand/8 hover:text-brand"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-text_dark"
                         }`}
                       >
-                        <span className="inline-flex items-center gap-3">
-                          <section.icon size={16} />
-                          {section.label}
-                        </span>
-                        <span className="text-xs uppercase tracking-[0.16em]">
-                          {active ? "Open" : "Go"}
-                        </span>
+                        <section.icon size={15} />
+                        {section.label}
                       </Link>
                     );
                   })}
-                </div>
-              </div>
+                </nav>
 
-              <div className="rounded-[28px] border border-border bg-white p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                  Account Notes
-                </p>
-                <div className="mt-4 space-y-3 text-sm text-gray-500">
-                  <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                    Logged-in orders appear in purchase history automatically.
-                  </div>
-                  <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                    Wishlist stays synced to this account across sessions.
-                  </div>
-                </div>
+                {/* Logout */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logout();
+                    toast.success("Logged out successfully");
+                  }}
+                  className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                >
+                  <FiLogOut size={15} />
+                  Logout
+                </button>
               </div>
             </aside>
 
-            <div>{children}</div>
-          </section>
+            {/* Content */}
+            <div className="min-w-0 flex-1">{children}</div>
+          </div>
         </div>
       </main>
     </ProfileContext.Provider>
   );
 }
-
-
-
-
-
-
