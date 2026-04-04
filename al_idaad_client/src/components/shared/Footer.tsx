@@ -10,7 +10,7 @@ const Footer = () => {
     <footer className="bg-gray-900 px-4 py-16 text-gray-300">
       <div className="mx-auto max-w-6xl">
         {/* 3-column grid with vertical middle layout */}
-        <div className="grid grid-cols-1  w-fit md:w-full mx-auto md:grid-cols-3 gap-10 pb-12 mb-12 border-b border-gray-800">
+        <div className="grid grid-cols-1   md:grid-cols-3 gap-10 pb-12 mb-12 border-b border-gray-800">
           {/* Brand - Left */}
           <div className="space-y-6">
             <div className="space-y-3">

@@ -68,16 +68,13 @@ const Navbar = ({ categories }: NavbarProps) => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
           {/* Logo */}
-          <Link
-            href="/"
-            className="font-playfair text-2xl md:text-3xl font-bold text-text_dark tracking-tight select-none"
-          >
+          <Link href="/" className="select-none">
             <Image
               src={"/fontLogo.png"}
               width={800}
               height={800}
               alt="logo"
-              className="  object-contain    aspect-[2/1] w-[180px] h-[90px] md:w-[200px] md:h-[120px]"
+              className=" object-contain  w-[180px] h-[90px] md:w-[200px] md:h-[120px] -ml-10 sm:-ml-8 md:-ml-2"
             />
           </Link>
 
