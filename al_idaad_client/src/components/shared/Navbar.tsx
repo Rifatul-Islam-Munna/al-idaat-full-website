@@ -72,7 +72,13 @@ const Navbar = ({ categories }: NavbarProps) => {
             href="/"
             className="font-playfair text-2xl md:text-3xl font-bold text-text_dark tracking-tight select-none"
           >
-            Al Idaad
+            <Image
+              src={"/fontLogo.png"}
+              width={800}
+              height={800}
+              alt="logo"
+              className="  object-contain    aspect-[2/1] w-[180px] h-[90px] md:w-[200px] md:h-[120px]"
+            />
           </Link>
 
           {/* Desktop Links */}

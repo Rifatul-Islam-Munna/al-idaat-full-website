@@ -10,13 +10,17 @@ const Footer = () => {
     <footer className="bg-gray-900 px-4 py-16 text-gray-300">
       <div className="mx-auto max-w-6xl">
         {/* 3-column grid with vertical middle layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-12 mb-12 border-b border-gray-800">
+        <div className="grid grid-cols-1  w-fit md:w-full mx-auto md:grid-cols-3 gap-10 pb-12 mb-12 border-b border-gray-800">
           {/* Brand - Left */}
           <div className="space-y-6">
             <div className="space-y-3">
-              <h1 className="text-3xl md:text-[2.25rem] font-bold tracking-tight font-dm-serif leading-tight">
-                Al Idaad
-              </h1>
+              <Image
+                src="/footerLogo.png"
+                alt="Al Idaad"
+                width={140}
+                height={500}
+                className="object-contain"
+              />
               <p className="text-sm leading-6 text-gray-400 font-proza-libre max-w-[14rem]">
                 A symbol of trust, quality & elegance
               </p>
