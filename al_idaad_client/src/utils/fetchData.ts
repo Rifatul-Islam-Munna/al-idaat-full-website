@@ -35,7 +35,7 @@ export const getBlogs = async (): Promise<BlogType[]> => {
 // get single blog
 export const getSingleBlog = async (id: string): Promise<BlogType> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs/${id}`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     if (!res) {
@@ -49,7 +49,7 @@ export const getSingleBlog = async (id: string): Promise<BlogType> => {
 // get all blog categories
 export const getBlogCategories = async (): Promise<BlogCategoryType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blog-categories`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetAllBlogCategoriesResponseType = await res.json();
@@ -60,7 +60,7 @@ export const getBlogCategories = async (): Promise<BlogCategoryType[]> => {
 // get single blog category
 export const getBlogCategory = async (id: string): Promise<BlogCategoryType> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blog-categories/${id}`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetSingleBlogCategoryResponseType = await res.json();
@@ -71,7 +71,7 @@ export const getBlogCategory = async (id: string): Promise<BlogCategoryType> => 
 // get all product categories
 export const getCategories = async (): Promise<CategoryType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetAllCategoriesResponseType = await res.json();
@@ -82,7 +82,7 @@ export const getCategories = async (): Promise<CategoryType[]> => {
 // get single product category
 export const getCategory = async (id: string): Promise<CategoryType> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetSingleCategoryResponseType = await res.json();
@@ -107,7 +107,7 @@ export const getBanners = async (): Promise<BannerType[]> => {
 // get all products
 export const getProducts = async (): Promise<ProductType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetAllProductsResponseType = await res.json();
@@ -117,7 +117,7 @@ export const getProducts = async (): Promise<ProductType[]> => {
 // get single product
 export const getSingleProduct = async (identifier: string): Promise<ProductType> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${encodeURIComponent(identifier)}`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     if (!res.ok) {
@@ -130,7 +130,7 @@ export const getSingleProduct = async (identifier: string): Promise<ProductType>
 // get customer reviews
 export const getCustomerReviews = async (): Promise<CustomerReviewType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/customer-reviews`, {
-        next: { revalidate: 300},
+        next: { revalidate: 1 },
     });
 
     const result: GetCustomerReviewsResponseType = await res.json();
@@ -141,7 +141,7 @@ export const getCustomerReviews = async (): Promise<CustomerReviewType[]> => {
 // get offer banner
 export const getOfferBanner = async (): Promise<OfferType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/offers`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetOfferBannerResponseType = await res.json();
@@ -153,7 +153,7 @@ export const getOfferBanner = async (): Promise<OfferType[]> => {
 //get category images
 export const getCategoryImage = async (): Promise<CategoryImageType[]> => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/category-images`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     const result: GetCategoryImagesResponseType = await res.json();

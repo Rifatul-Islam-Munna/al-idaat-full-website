@@ -34,11 +34,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
 }
 
-export const revalidate = 300;
+export const revalidate = 1;
 
 async function getSingleBlog(id: string): Promise<BlogType> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs/${id}`, {
-        next: { revalidate: 300 },
+        next: { revalidate: 1 },
     });
 
     if (!res) {
